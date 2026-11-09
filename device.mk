@@ -105,6 +105,15 @@ WITH_LINEAGE_CHARGER := false
 PRODUCT_PACKAGES += \
     librmnetctl
 
+# Device settings: LumiaParts (packages/apps/LumiaParts), shared with the
+# 1520. Performance profile, double tap to wake, capacitive keys and their
+# Quick Settings tiles, all through the LineageOS and AOSP settings (no sysfs
+# access or SELinux rule of its own). Only when the app is checked out.
+ifneq ($(wildcard packages/apps/LumiaParts/Android.bp),)
+PRODUCT_PACKAGES += \
+    LumiaParts
+endif
+
 # DRM
 PRODUCT_PACKAGES += \
     android.hardware.drm@1.0-impl \
@@ -409,9 +418,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.qti.sensors.wu=false
 endif
 
-# Thermal config
+# Thermal config: the 930's own thresholds (Windows DSDT thermal zones) for
+# the msm8974-common thermal-engine blob, without hotplug actions.
 PRODUCT_COPY_FILES += \
-    $(MSM8974_COMMON_PATH)/configs/thermal-engine.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine-8974.conf
+    $(LOCAL_PATH)/configs/thermal-engine-8974.conf:$(TARGET_COPY_OUT_VENDOR)/etc/thermal-engine-8974.conf
 
 # TimeKeep
 PRODUCT_PACKAGES += \
