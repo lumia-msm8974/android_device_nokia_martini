@@ -29,6 +29,13 @@
  *   0x1B       interactive io_is_busy, VV
  *   others     (power collapse, hotplug, bus, migration) ignored
  * Frequencies are rounded up to the next available one, like mpdecision.
+ *
+ * Baselines: when the library is loaded it writes the full frequency range
+ * and the governor values of init (vendor.perflock.base.* properties, set
+ * by init.martini.power.rc next to the values themselves), whatever is in
+ * sysfs. A power HAL that died with a boost held (or a lock without
+ * timeout) would otherwise leave it in place for good, and the next
+ * instance would take the boosted values as its baseline.
  */
 
 #define LOG_TAG "martini-perflock"
@@ -42,6 +49,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <cutils/properties.h>
 #include <log/log.h>
 
 #define NR_CPUS 4
@@ -53,6 +61,13 @@
 #define INTERACTIVE "/sys/devices/system/cpu/cpufreq/interactive/"
 
 enum tunable { T_TIMER_RATE, T_HISPEED_FREQ, T_GO_HISPEED_LOAD, T_IO_IS_BUSY, NR_TUNABLES };
+
+static const char* const tunable_prop[NR_TUNABLES] = {
+        "vendor.perflock.base.timer_rate",
+        "vendor.perflock.base.hispeed_freq",
+        "vendor.perflock.base.go_hispeed_load",
+        "vendor.perflock.base.io_is_busy",
+};
 
 static const char* const tunable_path[NR_TUNABLES] = {
         INTERACTIVE "timer_rate",
@@ -144,6 +159,35 @@ static void load_frequencies(void) {
     }
     for (int t = 0; t < NR_TUNABLES; t++) cur_tunable[t] = -1;
     ALOGI("%d frequencies, %d-%d kHz", nr_freqs, cpu_min_hw, cpu_max_hw);
+
+    /*
+     * Start from the baselines, written unconditionally: no lock is held
+     * yet, so nothing of a previous instance must survive. Minimum first,
+     * then maximum: both orders keep min <= max from any leftover state.
+     */
+    for (int cpu = 0; cpu < NR_CPUS; cpu++) {
+        write_cpufreq(cpu, "scaling_min_freq", cpu_min_hw);
+        write_cpufreq(cpu, "scaling_max_freq", cpu_max_hw);
+    }
+    for (int t = 0; t < NR_TUNABLES; t++) {
+        char value[PROPERTY_VALUE_MAX];
+        char* end = NULL;
+        long base;
+
+        if (property_get(tunable_prop[t], value, "") <= 0) continue;
+        base = strtol(value, &end, 10);
+        if (end == value || *end || base < 0) continue;
+        base_tunable[t] = (int)base;
+        base_saved[t] = 1;
+        if (!write_int(tunable_path[t], base_tunable[t])) cur_tunable[t] = base_tunable[t];
+    }
+}
+
+/* At load time, before the power HAL asks for anything */
+__attribute__((constructor)) static void perflock_init(void) {
+    pthread_mutex_lock(&lock);
+    load_frequencies();
+    pthread_mutex_unlock(&lock);
 }
 
 /* VV x 100 MHz rounded up to an available frequency; 0xFE/0xFF = maximum */

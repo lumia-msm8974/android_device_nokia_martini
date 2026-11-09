@@ -10,6 +10,9 @@ cc_library_shared {
     name: "libmartini-perflock",
     vendor: true,
     srcs: ["perflock.c"],
-    shared_libs: ["liblog"],
+    shared_libs: [
+        "libcutils",
+        "liblog",
+    ],
     cflags: ["-Wall", "-Werror"],
 }
