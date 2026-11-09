@@ -1,0 +1,23 @@
+//
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// From device/oppo/msm8974-common/libshims: the Qualcomm RIL blob
+// (libril-qc-qmi-1.so) still calls AudioSystem::setErrorCallback.
+cc_library_shared {
+    name: "libaudioclient_shim",
+    srcs: ["libaudioclient_shim.cpp"],
+    shared_libs: ["libaudioclient"],
+    vendor: true,
+}
+
+// hci_qcomm_init asks the (not running) modem for the Bluetooth address
+// over QMI and waits about 60 s; the stack closes the HAL earlier and the
+// AOSP 1.0 HAL aborts. Preloaded only for hci_qcomm_init by init.qcom.bt.sh.
+cc_library_shared {
+    name: "libbtqmishim",
+    srcs: ["btqmishim.c"],
+    vendor: true,
+}

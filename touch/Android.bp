@@ -1,0 +1,27 @@
+//
+// Copyright (C) 2019 The LineageOS Project
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// Key disabler for the capacitive keys (Synaptics F1A), used by LineageOS
+// to turn the keys off when the on-screen navigation bar is enabled.
+cc_binary {
+    name: "vendor.lineage.touch@1.0-service.martini",
+    init_rc: ["vendor.lineage.touch@1.0-service.martini.rc"],
+    defaults: ["hidl_defaults"],
+    relative_install_path: "hw",
+    vendor: true,
+    srcs: [
+        "KeyDisabler.cpp",
+        "service.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder",
+        "libhidlbase",
+        "libutils",
+        "vendor.lineage.touch@1.0",
+    ],
+}

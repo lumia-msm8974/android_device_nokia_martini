@@ -1,0 +1,9 @@
+# The helper only talks to qmuxd, which serves the radio group: no root needed.
+service martini-uim-bootstrap /vendor/bin/martini-uim-bootstrap --activate-radio
+    class main
+    user radio
+    group radio log wakelock
+    disabled
+
+on property:init.svc.qmuxd=running
+    start martini-uim-bootstrap

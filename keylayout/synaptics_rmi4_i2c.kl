@@ -1,0 +1,9 @@
+# Lumia 1520 capacitive keys (Synaptics F1A 0D buttons):
+# back, start (home), search (app switch). The touch driver keeps 8-bit key
+# codes, so search arrives as KEY_MENU (139).
+key 158   BACK        VIRTUAL
+key 172   HOME        VIRTUAL
+key 139   APP_SWITCH  VIRTUAL
+
+# Double tap on the screen while it is off (touch firmware wakeup gesture)
+key 143   WAKEUP

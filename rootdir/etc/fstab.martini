@@ -1,0 +1,26 @@
+# Nokia Lumia 1520 (martini) - provisional fstab.
+# Android partitions do not exist on the stock Windows Phone GPT: they are
+# created inside the space of Data with the Lumia 950 XL layout (installer
+# partition.sh/provision.sh): aboot, boot, recovery, misc, modem, cache,
+# persist, persistent, fsc, fsg, metadata, ssd, modemst1, modemst2, vendor,
+# system, userdata. modem is a FAT image with the remote processor firmware
+# (also shipped in /vendor/firmware from the vendor's local folder);
+# modemst1/2, fsc, fsg and ssd are copies of the Windows MODEM_FS*/SSD
+# partitions used by rmt_storage.
+
+#<src>                                              <mnt_point>     <type>  <mnt_flags and options>                                         <fs_mgr_flags>
+/dev/block/platform/msm_sdcc.1/by-name/userdata     /data           ext4    noatime,nosuid,nodev,barrier=1,data=ordered,noauto_da_alloc,errors=panic wait,check,formattable,latemount
+/dev/block/platform/msm_sdcc.1/by-name/cache        /cache          ext4    noatime,nosuid,nodev,barrier=1,data=ordered,noauto_da_alloc,errors=panic wait,check,formattable
+/dev/block/platform/msm_sdcc.1/by-name/persist      /persist        ext4    nosuid,nodev,barrier=1,data=ordered,nodelalloc,errors=panic wait,check,notrim
+/dev/block/platform/msm_sdcc.1/by-name/modem        /firmware       vfat    ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0 wait
+/dev/block/platform/msm_sdcc.1/by-name/boot         /boot           emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/recovery     /recovery       emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/misc         /misc           emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/aboot        /aboot          emmc    defaults                                                        defaults
+/dev/block/platform/msm_sdcc.1/by-name/persistent   /persistent     emmc    defaults                                                        defaults
+
+# Compressed swap in RAM (zram, LZ4): 512 MB, about a third of the usable RAM;
+# one compression stream per core (all four cores run since SMP)
+/dev/block/zram0                                    none            swap    defaults                                                        zramsize=536870912,max_comp_streams=4
+
+/devices/msm_sdcc.2/mmc_host*                       auto            auto    defaults                                                        voldmanaged=sdcard1:auto,encryptable=userdata

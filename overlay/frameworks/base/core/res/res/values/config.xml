@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Lumia 1520 values that replace the Oppo ones of msm8974-common. -->
+<resources>
+    <!-- No flip cover sensor -->
+    <bool name="config_lidControlsSleep">false</bool>
+
+    <!-- Double tap to wake: the touch firmware's wakeup gesture, switched
+         by the power HAL (TARGET_TAP_TO_WAKE_NODE) -->
+    <bool name="config_supportDoubleTapWake">true</bool>
+
+    <!-- No notification LED -->
+    <bool name="config_intrusiveNotificationLed">false</bool>
+
+    <!-- Capacitive keys by default; enabling the navigation bar or gestures
+         in LineageOS turns the keys off through the key disabler. -->
+    <bool name="config_showNavigationBar">false</bool>
+
+    <!-- Automatic brightness from the APDS-9930 ambient light sensor
+         (calibrated in the kernel driver against a reference phone). -->
+    <bool name="config_automatic_brightness_available">true</bool>
+
+    <!-- Ambient light thresholds (lux) between the backlight levels below -->
+    <integer-array name="config_autoBrightnessLevels">
+        <item>2</item>
+        <item>5</item>
+        <item>10</item>
+        <item>20</item>
+        <item>40</item>
+        <item>70</item>
+        <item>100</item>
+        <item>150</item>
+        <item>250</item>
+        <item>400</item>
+        <item>650</item>
+        <item>1000</item>
+        <item>2000</item>
+        <item>4000</item>
+        <item>8000</item>
+    </integer-array>
+
+    <!-- Backlight (0-255) for each lux range: one more entry than above -->
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>10</item>
+        <item>16</item>
+        <item>22</item>
+        <item>30</item>
+        <item>40</item>
+        <item>52</item>
+        <item>64</item>
+        <item>78</item>
+        <item>92</item>
+        <item>108</item>
+        <item>128</item>
+        <item>150</item>
+        <item>180</item>
+        <item>210</item>
+        <item>240</item>
+        <item>255</item>
+    </integer-array>
+
+    <!-- Ambient display and always-on display (Glance-like). The panel is a
+         DSI command mode panel, so the doze display state is the MDSS low
+         power mode: the panel keeps its last frame and the backlight goes
+         to the doze level. Always-on stays off by default (LCD backlight). -->
+    <string name="config_dozeComponent" translatable="false">com.android.systemui/com.android.systemui.doze.DozeService</string>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_dozeAlwaysOnEnabled">false</bool>
+    <integer name="config_screenBrightnessDoze">17</integer>
+</resources>

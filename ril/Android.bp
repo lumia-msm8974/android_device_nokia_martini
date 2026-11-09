@@ -1,0 +1,16 @@
+//
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// Activates the primary USIM session the Windows modem firmware leaves
+// DETECTED, then confirms the subscription (see martini-uim-bootstrap.c).
+cc_binary {
+    name: "martini-uim-bootstrap",
+    vendor: true,
+    srcs: ["martini-uim-bootstrap.c"],
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+    shared_libs: ["libdl", "liblog"],
+    init_rc: ["martini-uim-bootstrap.rc"],
+}

@@ -1,0 +1,104 @@
+#
+# Copyright 2014 The CyanogenMod Project
+# Copyright 2026 The LineageOS Project
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Power settings for the Lumia 1520, from device/oppo/msm8974-common
+# init.qcom.power.rc. The Windows Phone TrustZone has no power collapse and
+# resets the SoC when secondary cores are started through SCM, so this file
+# never enables msm_pm power collapse modes, never touches cpu1-3 online
+# state and never starts mpdecision. The kernel starts cores 1-3 at boot
+# through the UEFI parking protocol, refuses CPU hotplug and idles in WFI.
+# The kernel leaves their clocks as the firmware set them at boot, but once
+# the cores run, cpufreq scales them like cpu0 (tested from 300 MHz to
+# 2.15 GHz), so every core gets the same governor as on the OnePlus One.
+
+on early-init
+    write /sys/block/mmcblk0/bdi/read_ahead_kb 512
+    # eMMC requests do not feed the entropy pool: less work per request,
+    # the pool has other sources
+    write /sys/block/mmcblk0/queue/add_random 0
+
+on boot
+    # Double tap to wake switch, written by the power HAL (user system)
+    chown system system /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
+    chmod 0660 /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
+
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay "19000 1400000:39000 1700000:19000"
+    write /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load 90
+    write /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq 1190400
+    write /sys/devices/system/cpu/cpufreq/interactive/io_is_busy 1
+    write /sys/devices/system/cpu/cpufreq/interactive/target_loads "85 1500000:90 1800000:70"
+    write /sys/devices/system/cpu/cpufreq/interactive/min_sample_time 40000
+    write /sys/devices/system/cpu/cpufreq/interactive/sampling_down_factor 100000
+    write /sys/devices/system/cpu/cpufreq/interactive/timer_rate 30000
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
+
+    write /sys/module/cpu_boost/parameters/boost_ms 20
+    write /sys/module/cpu_boost/parameters/sync_threshold 1728000
+    write /sys/module/cpu_boost/parameters/input_boost_freq 1497600
+    write /sys/module/cpu_boost/parameters/input_boost_ms 40
+
+    # The OnePlus One writes qcom,cpubw.40: on the 1520 the same msm8974.dtsi
+    # node is numbered 41 (the auto-numbered devices before it differ).
+    write /sys/class/devfreq/qcom,cpubw.41/governor "cpubw_hwmon"
+    # GPU: msm-adreno-tz is the kernel's default governor and decides in the
+    # kernel (no TrustZone DCVS calls on the 1520), nothing to write here.
+
+    # Perf locks of the power HAL (libmartini-perflock, running as system):
+    # interaction, launch, display and profile boosts move these values,
+    # as mpdecision does as root on the OnePlus One.
+    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+    chown system system /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq
+    chown system system /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq
+    chown system system /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq
+    chown system system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    chown system system /sys/devices/system/cpu/cpu1/cpufreq/scaling_max_freq
+    chown system system /sys/devices/system/cpu/cpu2/cpufreq/scaling_max_freq
+    chown system system /sys/devices/system/cpu/cpu3/cpufreq/scaling_max_freq
+    chown system system /sys/devices/system/cpu/cpufreq/interactive/timer_rate
+    chown system system /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
+    chown system system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
+    chown system system /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+
+on charger
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "powersave"
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "powersave"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "powersave"
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "powersave"
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
+
+on fs
+    wait /dev/block/platform/msm_sdcc.1
+    symlink /dev/block/platform/msm_sdcc.1 /dev/block/bootdevice
+    setprop sys.usb.ffs.aio_compat 1
+    setprop persist.adb.nonblocking_ffs 0
+    setprop ro.adb.nonblocking_ffs 0
+    setprop sys.usb.mtp.device_type 2
+
+on property:recovery.perf.mode=1
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "performance"
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "performance"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "performance"
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "performance"
+
+on property:recovery.perf.mode=0
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "interactive"
+
+on property:dev.bootcomplete=1
+    setprop sys.io.scheduler "bfq"
+    setprop vendor.post_boot.parsed 1

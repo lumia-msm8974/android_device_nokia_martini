@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- Software graphics (TARGET_MARTINI_GRAPHICS=software): one Krait core
+     renders 1080x1920 through SwiftShader, so window and transition
+     animations are off by default to keep the UI responsive. -->
+<resources>
+    <fraction name="def_window_animation_scale">0%</fraction>
+    <fraction name="def_window_transition_scale">0%</fraction>
+</resources>

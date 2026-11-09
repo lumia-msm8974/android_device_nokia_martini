@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Ambient display uses the panel's doze state (MDSS low power mode
+         on the command mode panel) instead of keeping it fully on. -->
+    <bool name="doze_display_state_supported">true</bool>
+</resources>

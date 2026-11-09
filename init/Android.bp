@@ -1,0 +1,16 @@
+//
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+cc_library_static {
+    name: "libinit_martini",
+    recovery_available: true,
+    srcs: ["init_martini.cpp"],
+    include_dirs: [
+        "system/core/base/include",
+        "system/core/init",
+    ],
+    static_libs: ["libbase"],
+}

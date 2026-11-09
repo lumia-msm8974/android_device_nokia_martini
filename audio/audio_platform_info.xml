@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Lumia 1520 (martini): the loudspeaker amplifier sits on the secondary
+     MI2S, not on a WCD9320 output (stock ACDB device 70, SEC_MI2S_RX).
+     The "sec-mi2s" backend selects the "<usecase> sec-mi2s" paths of
+     mixer_paths.xml. ACDB IDs keep the MSM8974 defaults, which match the
+     stock calibration (7 handset, 14 speaker, 10 headphones, 4 handset mic,
+     11 speaker mic, 8 headset mic). -->
+<audio_platform_info>
+    <backend_names>
+        <device name="SND_DEVICE_OUT_SPEAKER" backend="sec-mi2s"/>
+        <device name="SND_DEVICE_OUT_SPEAKER_REVERSE" backend="sec-mi2s"/>
+        <device name="SND_DEVICE_OUT_VOICE_SPEAKER" backend="sec-mi2s"/>
+    </backend_names>
+</audio_platform_info>

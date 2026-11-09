@@ -1,0 +1,4 @@
+# Capacitive key disabler: the touch driver's 0dbutton attribute
+type sysfs_touchpanel, sysfs_type, fs_type;
+
+allow hal_lineage_touch_default sysfs_touchpanel:file rw_file_perms;

@@ -1,0 +1,30 @@
+# Nokia Lumia 1520 (martini)
+
+# Display: no Qualcomm content adaptive backlight
+ro.qualcomm.cabl=0
+
+# Factory reset protection is off during bring-up: with the 68 MB persistent
+# partition of the installer layout, PersistentDataBlockService hashes the
+# whole partition at boot and times out on one core (10 s). Re-enable with
+# ro.frp.pst=/dev/block/platform/msm_sdcc.1/by-name/persistent once it is
+# smaller or SMP works.
+
+# Audio: single mic in calls. The dual-mic endfire device (ACDB 41) has no
+# voice calibration pair with the earpiece (7) in the ACDB in use.
+persist.vendor.audio.fluence.voicecall=false
+
+# Radio: Qualcomm QMI RIL from the generic MSM8974 blobs
+rild.libpath=/system/vendor/lib/libril-qc-qmi-1.so
+vendor.rild.libpath=/system/vendor/lib/libril-qc-qmi-1.so
+persist.radio.add_power_save=1
+persist.radio.apm_sim_not_pwdn=1
+ro.ril.ext.ecclist=112,911,999,110,122,119,120,000,08,118
+
+# Bluetooth address of the phone (DPP BT.PROVISION, provisioned by the
+# installer as "AA:BB:CC:DD:EE:FF"): the Bluetooth HAL reads it from here;
+# init.qcom.bt.sh writes the same address to Pronto with hci_qcomm_init -b
+ro.bt.bdaddr_path=/persist/bdaddr.txt
+
+# Power HAL perf locks: libmartini-perflock applies them in place of
+# mpdecision (overrides libqti-perfd-client.so of the msm8974 common tree)
+ro.vendor.extension_library=libmartini-perflock.so

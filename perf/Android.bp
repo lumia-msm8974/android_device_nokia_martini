@@ -1,0 +1,15 @@
+//
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// Perf lock provider for the MSM8974 power HAL (ro.vendor.extension_library):
+// applies the boost requests that mpdecision serves on the OnePlus One.
+cc_library_shared {
+    name: "libmartini-perflock",
+    vendor: true,
+    srcs: ["perflock.c"],
+    shared_libs: ["liblog"],
+    cflags: ["-Wall", "-Werror"],
+}
