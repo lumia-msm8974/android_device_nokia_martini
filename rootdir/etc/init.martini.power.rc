@@ -21,6 +21,16 @@ on early-init
     # the pool has other sources
     write /sys/block/mmcblk0/queue/add_random 0
 
+on init
+    # Keep background work off the cores the UI needs. All four cores are
+    # the same Krait 400: background tasks get cpu0, system background work
+    # cpu0-2, restricted apps cpu0-1; foreground and top-app keep cpu0-3.
+    # Needs CONFIG_CPUSETS and cpuset_allow_attach in the kernel; with an
+    # older kernel /dev/cpuset is not mounted and these writes fail harmlessly.
+    write /dev/cpuset/background/cpus 0
+    write /dev/cpuset/system-background/cpus 0-2
+    write /dev/cpuset/restricted/cpus 0-1
+
 on boot
     # Double tap to wake switch, written by the power HAL (user system).
     # Same path as on the 1520 (i2c-2, 0x4b); unverified on the 930.
