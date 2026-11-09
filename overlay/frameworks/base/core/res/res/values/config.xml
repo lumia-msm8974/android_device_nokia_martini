@@ -21,49 +21,43 @@
          off through the key disabler. -->
     <bool name="config_showNavigationBar">false</bool>
 
-    <!-- Automatic brightness from the APDS-9930 ambient light sensor. The
-         lux calibration of the kernel driver and the curve below come from
-         the 1520 (LCD). TODO: recheck both on the 930 (different window
-         above the sensor, AMOLED panel). -->
+    <!-- Automatic brightness from the APDS-9930 ambient light sensor (kernel
+         calibration scaled from the 1520 by the Windows coefficients). -->
     <bool name="config_automatic_brightness_available">true</bool>
 
-    <!-- Ambient light thresholds (lux) between the backlight levels below -->
+    <!-- Ambient light thresholds (lux): the breakpoints of the lux to nits
+         table of the 930 Windows panel driver (registry NOKIA_PANEL
+         Parameters\Settings, LIGHT_LuxToNitD_LuxIn1-9). -->
     <integer-array name="config_autoBrightnessLevels">
         <item>2</item>
-        <item>5</item>
         <item>10</item>
-        <item>20</item>
         <item>40</item>
-        <item>70</item>
         <item>100</item>
-        <item>150</item>
         <item>250</item>
-        <item>400</item>
-        <item>650</item>
+        <item>500</item>
         <item>1000</item>
-        <item>2000</item>
-        <item>4000</item>
-        <item>8000</item>
+        <item>3500</item>
+        <item>15000</item>
     </integer-array>
 
-    <!-- Backlight (0-255) for each lux range: one more entry than above -->
+    <!-- Backlight (DCS 0x51, 0-255) for each lux range: the nits of the same
+         table (LIGHT_LuxToNitD_NitOut0-9: 22, 35, 60, 85, 120, 165, 200,
+         250, 325, 400; 600 and 800 nits above 50000 lux; the generic
+         oempanel.inf defaults differ), assuming the panel is about linear
+         in nits and reaches 400 nits at 255 like the 950 XL AMOLED; the
+         levels above 400 nits (outdoor boost) are clamped to 255.
+         TODO: measure the panel luminance on the phone. -->
     <integer-array name="config_autoBrightnessLcdBacklightValues">
-        <item>10</item>
-        <item>16</item>
-        <item>22</item>
-        <item>30</item>
-        <item>40</item>
-        <item>52</item>
-        <item>64</item>
-        <item>78</item>
-        <item>92</item>
-        <item>108</item>
-        <item>128</item>
-        <item>150</item>
-        <item>180</item>
-        <item>210</item>
-        <item>240</item>
-        <item>255</item>
+        <item>14</item>   <!-- 0-2 -->
+        <item>22</item>   <!-- 2-10 -->
+        <item>38</item>   <!-- 10-40 -->
+        <item>54</item>   <!-- 40-100 -->
+        <item>76</item>   <!-- 100-250 -->
+        <item>105</item>  <!-- 250-500 -->
+        <item>128</item>  <!-- 500-1000 -->
+        <item>159</item>  <!-- 1000-3500 -->
+        <item>207</item>  <!-- 3500-15000 -->
+        <item>255</item>  <!-- 15000+ -->
     </integer-array>
 
     <!-- Ambient display and always-on display (Glance-like). The AMOLED
