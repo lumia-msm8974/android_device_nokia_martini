@@ -1,0 +1,3 @@
+# Sensor Core rollback (init.martini.ssc.rc): bind mount of hals-martini.conf
+# over /vendor/etc/sensors/hals.conf
+allow init vendor_configs_file:file mounton;
