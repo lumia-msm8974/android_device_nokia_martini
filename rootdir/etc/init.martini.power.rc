@@ -21,7 +21,8 @@ on early-init
     write /sys/block/mmcblk0/queue/add_random 0
 
 on boot
-    # Double tap to wake switch, written by the power HAL (user system)
+    # Double tap to wake switch, written by the power HAL (user system).
+    # TODO: same path as on the 1520, unverified on the 930.
     chown system system /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
     chmod 0660 /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
 

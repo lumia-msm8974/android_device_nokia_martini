@@ -10,5 +10,4 @@ genfscon sysfs /devices/f9925000.i2c/i2c-4/4-0039       u:object_r:sysfs_sensors
 genfscon sysfs /devices/f9925000.i2c/i2c-4/4-0068       u:object_r:sysfs_sensors:s0
 genfscon sysfs /devices/f9968000.i2c/i2c-5/5-001e       u:object_r:sysfs_sensors:s0
 genfscon sysfs /devices/f9968000.i2c/i2c-5/5-000f       u:object_r:sysfs_sensors:s0
-genfscon sysfs /devices/f9924000.i2c/i2c-2/2-004b/0dbutton u:object_r:sysfs_touchpanel:s0
 genfscon sysfs /devices/f9924000.i2c/i2c-2/2-004b/wake_gesture u:object_r:sysfs_touchpanel:s0

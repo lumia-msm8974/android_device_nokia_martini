@@ -3,6 +3,9 @@
 # Display: no Qualcomm content adaptive backlight
 ro.qualcomm.cabl=0
 
+# Navigation: on-screen keys, no hardware navigation keys
+qemu.hw.mainkeys=0
+
 # Factory reset protection is off during bring-up: with the 68 MB persistent
 # partition of the installer layout, PersistentDataBlockService hashes the
 # whole partition at boot and times out on one core (10 s). Re-enable with

@@ -1,0 +1,2 @@
+# Touch controller attributes (wake_gesture), written by the power HAL
+type sysfs_touchpanel, sysfs_type, fs_type;
