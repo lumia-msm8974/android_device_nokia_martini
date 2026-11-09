@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// PN544 HAL for the legacy NXP NFC stack. It is loaded by libnfc and
+// PN544 HAL for the legacy NXP NFC stack (930 chip still to identify). It is loaded by libnfc and
 // libnfc_jni in the Nfc app process, so it lives in /system/lib/hw.
 cc_library_shared {
     name: "nfc.martini",

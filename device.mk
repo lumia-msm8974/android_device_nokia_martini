@@ -266,8 +266,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     martini-uim-bootstrap
 
-# NFC: NXP PN544 (HCI, pre-NCI), driven by the legacy NXP stack
-# (external/libnfc-nxp and the nxp variant of packages/apps/Nfc).
+# NFC: the 1520 setup, NXP PN544 (HCI, pre-NCI) driven by the legacy NXP
+# stack (external/libnfc-nxp and the nxp variant of packages/apps/Nfc).
+# TODO: the 930 NFC chip is not identified yet (see nfc/nfc_hw.c); no
+# EEPROM tuning is listed, so the NFC service does not start the chip.
 PRODUCT_PACKAGES += \
     libnfc \
     libnfc_jni \
