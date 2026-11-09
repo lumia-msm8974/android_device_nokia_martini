@@ -214,7 +214,8 @@ BOARD_HOSTAPD_DRIVER             := NL80211
 BOARD_HOSTAPD_PRIVATE_LIB        := lib_driver_cmd_qcwcn
 PRODUCT_VENDOR_MOVE_ENABLED      := true
 TARGET_DISABLE_WCNSS_CONFIG_COPY := true
-# No QMI in wcnss_service: it asks the modem (off on the 1520) for the MAC
+# No QMI in wcnss_service: it asks the modem (off during the 1520 bring-up,
+# not tested on the 930) for the MAC
 # over QMI DMS first and waits forever, so it never opens /dev/wcnss_wlan,
 # which is what loads the Pronto firmware. The MAC comes from /persist
 # through init.martini.wifi.sh (WCNSS_qcom_cfg.ini).

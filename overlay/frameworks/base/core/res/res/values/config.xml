@@ -4,7 +4,7 @@
 
      SPDX-License-Identifier: Apache-2.0
 -->
-<!-- Lumia 1520 values that replace the Oppo ones of msm8974-common. -->
+<!-- Lumia 930 values that replace the Oppo ones of msm8974-common. -->
 <resources>
     <!-- No flip cover sensor -->
     <bool name="config_lidControlsSleep">false</bool>

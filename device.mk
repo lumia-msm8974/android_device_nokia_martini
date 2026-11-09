@@ -14,7 +14,7 @@ LOCAL_PATH := device/nokia/martini
 # updater and OTA TrustZone assertion) and with martini init scripts.
 MSM8974_COMMON_PATH := device/oppo/msm8974-common
 
-# Proprietary files first: files taken from the 1520 (proprietary-local/)
+# Proprietary files first: files taken from the 930 (proprietary-local/)
 # take precedence over the generic ones listed below.
 $(call inherit-product, vendor/nokia/martini/martini-vendor.mk)
 
@@ -89,8 +89,9 @@ PRODUCT_PACKAGES += \
 # Boot animation
 TARGET_BOOTANIMATION_HALF_RES := true
 
-# Camera (no camera HAL for the 1520 yet: the provider reports no camera).
-# Snap is left out until there is one: it only showed a black window.
+# Camera (no camera HAL for the 930 yet: 20 MP PureView rear camera, ACPI
+# QCOM2436, and 1.2 MP front camera, QCOM2437; the provider reports no
+# camera). Snap is left out until there is one (black window on the 1520).
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
     camera.device@1.0-impl
@@ -370,7 +371,7 @@ PRODUCT_COPY_FILES += \
     prebuilts/vndk/v29/arm/arch-arm-armv7-a-neon/shared/vndk-core/libprotobuf-cpp-lite.so:$(TARGET_COPY_OUT_VENDOR)/lib/libprotobuf-cpp-lite-v29.so
 
 # WiFi
-# WCNSS_cfg.dat is a generic fallback: the 1520's own qcwlan8974cfg.dat
+# WCNSS_cfg.dat is a generic fallback: the 930's own qcwlan8974cfg.dat
 # (vendor proprietary-local/) wins when present. The NV file is generic.
 PRODUCT_COPY_FILES += \
     $(MSM8974_COMMON_PATH)/wifi/WCNSS_cfg.dat:$(TARGET_COPY_OUT_VENDOR)/firmware/wlan/prima/WCNSS_cfg.dat \

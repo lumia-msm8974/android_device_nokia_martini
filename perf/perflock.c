@@ -3,14 +3,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *
- * Perf lock provider for the MSM8974 power HAL on the Lumia 1520.
+ * Perf lock provider for the MSM8974 power HAL on the Lumia 930 (from the
+ * Lumia 1520 port).
  *
  * The power HAL (vendor/qcom/opensource/power, power-8974.c) asks for its
  * boosts through perf_lock_acq()/perf_lock_rel() of the library named by
  * ro.vendor.extension_library. On the OnePlus One that library forwards the
  * requests to mpdecision, which also hotplugs cores. mpdecision cannot run
- * on the 1520 (the Windows Phone TrustZone refuses CPU hotplug), so every
- * interaction, launch, display and profile hint failed.
+ * on the MSM8974 Lumias (the Windows Phone TrustZone refuses CPU hotplug),
+ * so every interaction, launch, display and profile hint failed.
  *
  * This library implements the same requests directly in the HAL process:
  * the MSM8974 perf lock opcodes used by power-8974.c are applied to the

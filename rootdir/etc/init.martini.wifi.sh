@@ -4,9 +4,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Use the Lumia 1520's own Wi-Fi calibration and MAC addresses when the
+# Use the Lumia 930's own Wi-Fi calibration and MAC addresses when the
 # installer has provisioned them into /persist from the Windows DPP partition
-# (as on the Lumia 950 XL port):
+# (as on the Lumia 1520 and 950 XL ports; the 930 has the same WCN3680
+# Pronto and DPP provisioning files, not yet read from a 930):
 #   QCOM/WLAN_CLPC.PROVISION -> /persist/WCNSS_qcom_wlan_nv.bin
 #     same format as Android's WCNSS NV, with the RF calibration of the phone
 #   QCOM/WLAN.PROVISION      -> /persist/wlan_mac.bin

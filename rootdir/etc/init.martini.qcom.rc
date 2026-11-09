@@ -164,7 +164,7 @@ on fs
     mount none /system/etc/gps.conf /system/etc/gps_debug.conf bind
 
 # rmt_storage serves the modem EFS partitions (modemst1/2, fsg, fsc); it
-# needs the oem_data UIO of the martini device tree.
+# needs the oem_data UIO of the martini kernel device tree.
 service rmt_storage /system/vendor/bin/rmt_storage
     class core
     user root
@@ -192,8 +192,9 @@ service netmgrd /system/vendor/bin/netmgrd
     group root wifi wakelock radio inet oem_2950
 
 # QCOM sensor daemon: it talks to the sensor core on the ADSP (kernel
-# 4f1e8844 loads it), but the 1520 sensors are driven by the kernel input
-# drivers and read by sensors.martini; kept off ("start sensors" to try it).
+# 4f1e8844 loads it on the 1520), but the sensors are driven by the kernel
+# input drivers and read by sensors.martini; kept off ("start sensors" to
+# try it).
 service sensors /system/vendor/bin/sensors.qcom
     class late_start
     user root
@@ -236,8 +237,8 @@ service charger /system/bin/charger
 on charger
     write /sys/class/leds/lcd-backlight/brightness 100
 
-# Not started: the martini kernel runs on one core until the UEFI parking
-# backend for the secondary cores is ported.
+# Not started: mpdecision hotplugs cores, which the Windows Phone TrustZone
+# refuses; the kernel starts cores 1-3 through the UEFI parking mailboxes.
 service mpdecision /system/vendor/bin/mpdecision --avg_comp
     class main
     user root

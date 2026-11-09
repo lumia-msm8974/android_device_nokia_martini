@@ -2,10 +2,11 @@
  * Copyright (c) 2026, Lorenzo Giannoccaro.
  * SPDX-License-Identifier: Apache-2.0
  *
- * Preload shim for hci_qcomm_init on the Lumia 1520 (martini).
+ * Preload shim for hci_qcomm_init on the MSM8974 Lumias (from the Lumia
+ * 1520 port).
  *
  * hci_qcomm_init asks the modem for the Bluetooth address through QMI DMS
- * before it downloads the Pronto Bluetooth NVM. The modem does not run, so
+ * before it downloads the Pronto Bluetooth NVM. Without a running modem
  * QMI client setup waits about 60 s before failing; the Bluetooth stack
  * gives up much earlier, closes the HAL and the AOSP 1.0 HAL aborts. The
  * address comes from /persist/bdaddr.txt through "-b" anyway, so make QMI

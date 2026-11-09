@@ -1,5 +1,5 @@
-# Recovery init for the Nokia Lumia 1520 (martini), imported by the recovery
-# init.rc as /init.recovery.${ro.hardware}.rc.
+# Recovery init for the Nokia Lumia 930 (martini), imported by the
+# recovery init.rc as /init.recovery.${ro.hardware}.rc.
 #
 # Kernel 3.4 FunctionFS has no AIO: adbd must use the legacy FunctionFS
 # code with blocking reads and writes, as the Android system does in

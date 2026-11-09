@@ -74,7 +74,8 @@ case $LE_POWER_CLASS in
      logi "LE Power Class: To override, Before turning BT ON; setprop qcom.bt.le_dev_pwr_class <1 or 2 or 3>";;
 esac
 
-# Lumia 1520: the BD address is not in the modem NV but in the Windows DPP
+# Lumia 930, as on the 1520: the BD address is not in the modem NV but in
+# the Windows DPP
 # partition (QCOM/BT.PROVISION); the installer provisions it as
 # /persist/bdaddr.txt ("AA:BB:CC:DD:EE:FF"). Pass it to hci_qcomm_init.
 BD_ADDR=""
