@@ -133,9 +133,16 @@ PRODUCT_PACKAGES += \
 #    MDSS display HAL (gralloc.msm8974, hwcomposer.msm8974 through
 #    HWC2On1Adapter: layers composed by the MDP and streamed to the video
 #    mode AMOLED panel) and the Adreno 330 GPU blobs. Needs the kernel with
-#    MDSS continuous splash, the martini panel driver, OCMEM and KGSL.
-#    TODO: the martini MDSS panel is not tested yet; if it does not light
-#    up, build with TARGET_MARTINI_GRAPHICS=software (UEFI framebuffer).
+#    MDSS continuous splash, the martini panel driver, OCMEM and KGSL: the
+#    default device tree msm8974-v2.2-martini (boot-mdss). Brightness is
+#    the panel's DCS 0x51 through lcd-backlight (0..255), screen off is
+#    FBIOBLANK (panel sleep in and reset); doze maps to full on and doze
+#    suspend to off (the MDSS driver has no low power state for video mode
+#    panels).
+#    TODO: the martini MDSS panel is not tested yet. The fallback kernel
+#    (boot-simplefb: msm8974-v2.2-martini-simplefb appended, MDSS off)
+#    shows the UEFI framebuffer only; Android draws on it only with a
+#    system built with TARGET_MARTINI_GRAPHICS=software.
 #
 #  mdss:
 #    Same display HAL with OpenGL ES from SwiftShader, to test the panel

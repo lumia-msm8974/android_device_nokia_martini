@@ -6,16 +6,20 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * Lights HAL for the Nokia Lumia 930: display and key backlight. The AMOLED
- * panel has no WLED: its brightness is a DCS command sent by the MDSS panel
- * driver, which exposes it as the lcd-backlight LED class device
- * (0..max_brightness, usually 255). The three capacitive keys have
- * backlight LEDs (Windows touch settings: LedCount 3), lit on the 1520 by
+ * panel has no WLED: its brightness is a DCS command (0x51) sent by the
+ * MDSS panel driver (bl_ctrl_dcs), which exposes it as the lcd-backlight
+ * LED class device: max_brightness 255, scaled by mdss_fb to the panel
+ * range 1..255 of the device tree (0 stays 0), so the value written here
+ * is the DCS level. With the simple-framebuffer fallback kernel there is
+ * no lcd-backlight and the writes fail (logged once).
+ * The three capacitive keys have backlight LEDs (Windows touch settings:
+ * LedCount 3), lit on the 1520 by
  * the PM8941 KPDBL rows (kpdbl-pwm-1..4), driven together; the stock ACPI
  * tables of the 930 give its key light the same PMIC block. The buttons
  * light is only offered when those LED class devices exist. No
  * notification LED.
- * TODO: check on the phone that the martini panel driver registers
- * lcd-backlight and which range it uses, and which KPDBL row is wired.
+ * TODO: check on the phone the brightness levels against the panel
+ * luminance, and which KPDBL row is wired.
  * Derived from the CAF/LineageOS msm8974 liblight.
  */
 
