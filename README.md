@@ -71,8 +71,9 @@ Adapted for the 930:
   driven by the Qualcomm Sensor Core on the ADSP, as on Windows: the
   experimental stack in `sensors/ssc/` (registry of the 930 from its Windows
   qcSensors settings, `sensors.qcom`, `sensors.msm8974` next to
-  `sensors.martini` through the 1.0 multihal) is only built with
-  `MARTINI_SENSORS_SSC=true` and has never run on a 930;
+  `sensors.martini` through the 1.0 multihal) is built by default
+  (`MARTINI_SENSORS_SSC=false` leaves it out) and has never run on a 930;
+  rollback on the phone: `setprop persist.vendor.martini.ssc 0`, reboot;
   `sensors/ssc/check-sensor-def.py` checks the registry against the Windows
   values;
 - NFC: the legacy PN544 path is kept so the tree builds, but no EEPROM
@@ -159,7 +160,7 @@ Still open:
 - [ ] accelerometer, gyroscope, magnetometer on the Sensor Core (DSDT
       `\_SB.SEN1`, QCOM2495, as on the Nexus 5): does the Windows ADSP image
       take the registry of `sensors.qcom`, and are the axes right
-      (`sensors/ssc/`, `MARTINI_SENSORS_SSC=true`, off by default)?
+      (`sensors/ssc/`, on by default, `persist.vendor.martini.ssc 0` to turn it off)?
 - [ ] product code(s) of the phone (RM-1045, RM-1087) for the OTA assert;
 - [ ] audio: microphones (ACDB device IDs); vibrator: Windows drives it
       through the audio codec (`hwnvibraaudiocodec`), the PMIC vibrator

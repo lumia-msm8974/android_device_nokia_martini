@@ -378,12 +378,14 @@ PRODUCT_PACKAGES += \
 # qcSensors settings), the daemon start, and the multihal config of the 1.0
 # impl (vendor/etc/sensors/hals.conf), which loads sensors.martini and the
 # Qualcomm sensors.msm8974 HAL side by side. Blobs: msm8974-common.
-# Off by default: never run on a 930, and the Windows ADSP image may not
-# accept this daemon; a stuck HAL would stall system_server. Rollback on the
-# phone: setprop persist.vendor.martini.ssc 0 (init.martini.ssc.rc).
+# On by default (user's choice, 09/11/2026), never run on a 930 yet: the
+# Windows ADSP image may not accept this daemon and a stuck HAL would stall
+# system_server. Rollback on the phone without reflashing:
+# setprop persist.vendor.martini.ssc 0 and reboot (init.martini.ssc.rc);
+# MARTINI_SENSORS_SSC=false builds without it.
 # No step counter/detector: on Windows they are Nokia ADSP algorithms
 # (SSC_NOKIA_*) that the Qualcomm HAL cannot reach.
-MARTINI_SENSORS_SSC ?= false
+MARTINI_SENSORS_SSC ?= true
 
 ifeq ($(MARTINI_SENSORS_SSC),true)
 PRODUCT_COPY_FILES += \
