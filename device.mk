@@ -23,7 +23,7 @@ DEVICE_PACKAGE_OVERLAYS += \
     $(LOCAL_PATH)/overlay \
     $(MSM8974_COMMON_PATH)/overlay
 
-# Screen (1080x1920, 6")
+# Screen (1080x1920, 5" AMOLED)
 TARGET_SCREEN_HEIGHT := 1920
 TARGET_SCREEN_WIDTH := 1080
 PRODUCT_AAPT_CONFIG := normal
@@ -120,9 +120,11 @@ PRODUCT_PACKAGES += \
 #
 #  qcom (default):
 #    MDSS display HAL (gralloc.msm8974, hwcomposer.msm8974 through
-#    HWC2On1Adapter: layers composed by the MDP, frames kicked off to the
-#    command mode panel) and the Adreno 330 GPU blobs. Needs the kernel
-#    with MDSS continuous splash, OCMEM and KGSL (default since v16).
+#    HWC2On1Adapter: layers composed by the MDP and streamed to the video
+#    mode AMOLED panel) and the Adreno 330 GPU blobs. Needs the kernel with
+#    MDSS continuous splash, the martini panel driver, OCMEM and KGSL.
+#    TODO: the martini MDSS panel is not tested yet; if it does not light
+#    up, build with TARGET_MARTINI_GRAPHICS=software (UEFI framebuffer).
 #
 #  mdss:
 #    Same display HAL with OpenGL ES from SwiftShader, to test the panel

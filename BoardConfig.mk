@@ -49,7 +49,8 @@ TARGET_CPU_VARIANT_RUNTIME := krait
 # TrustZone resets the SoC on SCM SMP bring-up and has no power collapse:
 # the kernel handles it (msm_tz_restricted) and starts cores 1-3 through the
 # UEFI parking protocol mailboxes instead (no CPU hotplug).
-# The panel is driven by MDSS (continuous splash taken over from the UEFI),
+# The panel (AMOLED, DSI video mode, brightness through DCS commands, no
+# WLED) is driven by MDSS with continuous splash taken over from the UEFI,
 # the GPU by KGSL with OCMEM. No kernel console on the panel: the kernel
 # is built without the framebuffer console; the log stays in dmesg and adb.
 BOARD_KERNEL_IMAGE_NAME := zImage-dtb
@@ -103,7 +104,9 @@ BOARD_HEALTHD_CUSTOM_CHARGER_RES := $(MSM8974_COMMON_PATH)/charger/images
 WITH_DEXPREOPT_DEBUG_INFO := false
 
 # Display
-TARGET_SCREEN_DENSITY := 400
+# 5" 1080x1920 AMOLED, about 441 ppi: 480 (xxhdpi) is the usual Android
+# density for 5" 1080p phones (the 6" 1520 uses 400).
+TARGET_SCREEN_DENSITY := 480
 
 # Encryption: software only. Hardware FDE (cryptfshw) needs a QSEE app
 # that the Windows Phone TrustZone does not have.
@@ -168,7 +171,8 @@ BOARD_USES_QCOM_HARDWARE := true
 # Recovery
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.recovery
 # minui writes R,G,B,X bytes: the MDSS fb0 (MDP_RGBA_8888) and the
-# simple-framebuffer fallback (a8b8g8r8 once martini-splash fixes RGB0)
+# simple-framebuffer fallback (a8b8g8r8 once lk1st fixes RGB0, as bandit-splash
+# does on the 1520)
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 
 # TWRP (built from a twrp-11 manifest with WITH_TWRP=true)

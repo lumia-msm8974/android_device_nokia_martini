@@ -63,10 +63,11 @@
         <item>255</item>
     </integer-array>
 
-    <!-- Ambient display and always-on display (Glance-like). The panel is a
-         DSI command mode panel, so the doze display state is the MDSS low
-         power mode: the panel keeps its last frame and the backlight goes
-         to the doze level. Always-on stays off by default (LCD backlight). -->
+    <!-- Ambient display and always-on display (Glance-like). The AMOLED
+         panel only lights the pixels drawn, which suits always-on, but it is
+         a DSI video mode panel: the MDP must keep streaming frames, there is
+         no command mode low power state. Always-on stays off by default.
+         TODO: check doze power draw and the panel's idle mode on the 930. -->
     <string name="config_dozeComponent" translatable="false">com.android.systemui/com.android.systemui.doze.DozeService</string>
     <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
     <bool name="config_dozeAlwaysOnEnabled">false</bool>
