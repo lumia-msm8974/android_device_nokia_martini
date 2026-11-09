@@ -111,20 +111,21 @@ On non-user builds `device.mk` sets:
 
 ## TODO
 
-To read from the phone's DSDT/SSDT and registry:
+Read from the stock ACPI tables and registry of the RM-1045 FFU (done):
+capacitive keys (Back, Start, Search on F1A, as on the 1520) and their
+KPDBL backlight, NFC (NXP PN544 on I2C6 0x2b, EEPROM settings), touch and
+double tap timing, auto brightness curve, I2C bus numbers (touch i2c-2,
+light sensor i2c-4, NFC i2c-3).
 
-- [ ] accelerometer, gyroscope, magnetometer: chips, buses, addresses,
-      mounting matrices (`sensors/sensors_martini.h`, `ueventd.martini.rc`,
-      `sepolicy/genfs_contexts`);
-- [ ] NFC controller: chip (PN544 like the 1520, or an NCI chip), bus,
-      GPIOs, clock source, UICC/SWP wiring (`nfc/`);
-- [ ] capacitive navigation keys: does the touch controller report Back,
-      Start and Search (Synaptics F1A)? The DSDT functions known so far are
-      F01, F11 and F12 (`keylayout/synaptics_rmi4_i2c.kl`);
+Still open:
+
+- [ ] accelerometer, gyroscope, magnetometer: no device on an application
+      processor I2C bus; they sit behind the ADSP sensor core (DSDT
+      `\_SB.SEN1`, QCOM2495), as on the Nexus 5. Separate work;
 - [ ] product code(s) of the phone (RM-1045, RM-1087) for the OTA assert;
-- [ ] I2C bus numbers of the martini kernel DT (sensor and touch sysfs
-      paths, `TARGET_TAP_TO_WAKE_NODE`);
-- [ ] audio: TAS2552 wiring and microphones (ACDB device IDs).
+- [ ] audio: microphones (ACDB device IDs); vibrator: Windows drives it
+      through the audio codec (`hwnvibraaudiocodec`), the PMIC vibrator
+      with the GPIO 8 enable is what the 17.1 port uses.
 
 To extract from the 930 Windows firmware (FFU or the phone's MainOS):
 
@@ -138,7 +139,8 @@ To test on the phone:
 - [ ] lk1st load addresses and boot of `boot.img`; SMP through the parking
       mailboxes; cpufreq range;
 - [ ] MDSS panel and `lcd-backlight` range; doze;
-- [ ] touch, double tap to wake, keys;
+- [ ] touch, double tap to wake, keys and key backlight (which KPDBL row);
+- [ ] NFC (PN544 with the 930 EEPROM settings, SIM card emulation);
 - [ ] Wi-Fi, Bluetooth, modem (UIM bootstrap, SIM, data, calls), GPS;
 - [ ] audio routes (speaker, earpiece, headset, microphones);
 - [ ] battery and Qi charging (power supply sysfs paths), vibrator;
