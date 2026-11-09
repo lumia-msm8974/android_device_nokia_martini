@@ -5,12 +5,12 @@
 //
 
 // Activates the primary USIM session the Windows modem firmware leaves
-// DETECTED, then confirms the subscription (see martini-uim-bootstrap.c).
+// DETECTED, then confirms the subscription (see lumia-uim-bootstrap.c).
 cc_binary {
-    name: "martini-uim-bootstrap",
+    name: "lumia-uim-bootstrap",
     vendor: true,
-    srcs: ["martini-uim-bootstrap.c"],
+    srcs: ["lumia-uim-bootstrap.c"],
     cflags: ["-Wall", "-Wextra", "-Werror"],
     shared_libs: ["libdl", "liblog"],
-    init_rc: ["martini-uim-bootstrap.rc"],
+    init_rc: ["lumia-uim-bootstrap.rc"],
 }

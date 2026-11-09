@@ -262,9 +262,10 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/keylayout/synaptics_rmi4_i2c.kl:$(TARGET_COPY_OUT_VENDOR)/usr/keylayout/synaptics_rmi4_i2c.kl
 
 # Radio: the Windows modem firmware leaves the USIM DETECTED until the host
-# opens the provisioning session (ril/martini-uim-bootstrap.c)
+# opens the provisioning session (ril/lumia-uim-bootstrap.c, shared with
+# the Lumia 1520)
 PRODUCT_PACKAGES += \
-    martini-uim-bootstrap
+    lumia-uim-bootstrap
 
 # NFC: the 1520 setup, NXP PN544 (HCI, pre-NCI) driven by the legacy NXP
 # stack (external/libnfc-nxp and the nxp variant of packages/apps/Nfc).

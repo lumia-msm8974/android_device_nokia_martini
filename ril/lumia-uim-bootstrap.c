@@ -1,10 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * martini-uim-bootstrap: finish the Windows modem's primary USIM start-up.
+ * lumia-uim-bootstrap: finish the Windows modem's primary USIM start-up.
  *
- * Lumia 1520 port of cityman-uim-bootstrap (Lumia 950 XL, kernel-mmo
- * tools/cityman-ril): 32-bit vendor libraries and a martini device check.
- * The 1520 MPSS behaves the same way (USIM DETECTED, no GW session).
+ * MSM8974 Lumia port of cityman-uim-bootstrap (Lumia 950 XL, kernel-mmo
+ * tools/cityman-ril): 32-bit vendor libraries and a device check that
+ * accepts the Lumia 1520 (bandit) and the Lumia 930 (martini). The 1520
+ * MPSS behaves the same way (USIM DETECTED, no GW session); the 930 runs
+ * the same Windows Phone modem firmware family.
+ * TODO: verify the USIM behaviour of the 930 MPSS on the phone.
  *
  * The Lumia MPSS leaves the USIM application DETECTED until a client opens
  * the primary GW provisioning session, and keeps it out of READY until the
@@ -28,16 +31,26 @@
 
 #include <sys/system_properties.h>
 
-static int is_martini(void)
+/* MSM8974 Lumias whose Windows MPSS needs this bootstrap */
+static const char *const supported_devices[] = {
+	"bandit",	/* Lumia 1520 */
+	"martini",	/* Lumia 930 */
+};
+
+static int is_supported_device(void)
 {
 	char value[PROP_VALUE_MAX] = { 0 };
+	size_t i;
 
 	if (__system_property_get("ro.boot.hardware", value) <= 0)
 		return 0;
-	return strcmp(value, "martini") == 0;
+	for (i = 0; i < sizeof(supported_devices) / sizeof(supported_devices[0]); i++)
+		if (strcmp(value, supported_devices[i]) == 0)
+			return 1;
+	return 0;
 }
 
-#define TAG "MartiniUIM"
+#define TAG "LumiaUIM"
 #define LOG(...)							\
 	do {								\
 		__android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__); \
@@ -287,7 +300,7 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
-	if (!is_martini()) {
+	if (!is_supported_device()) {
 		LOG("Unsupported device; no QMI changes");
 		return 1;
 	}
