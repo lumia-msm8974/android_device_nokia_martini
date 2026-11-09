@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *
- * Vendor init for the Nokia Lumia 1520. Replaces the Oppo msm8974 libinit;
+ * Vendor init for the Nokia Lumia 930. Replaces the Oppo msm8974 libinit;
  * the alarm boot handling is the same as in device/oppo/msm8974-common.
  */
 
@@ -54,8 +54,8 @@ void vendor_load_properties()
     property_override("ro.boot.btmacaddr", "00:00:00:00:00:00");
     init_alarm_boot_properties();
 
-    // The product code (RM-937/938/939/940) is not passed by lk1st yet:
-    // only the generic model is set.
+    // The product code (RM-1045) is not passed by lk1st yet: only the
+    // generic model is set.
     property_override("ro.product.model", "Lumia 930");
     property_override("ro.product.vendor.model", "Lumia 930");
 }

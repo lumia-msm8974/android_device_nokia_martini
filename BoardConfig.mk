@@ -17,7 +17,11 @@ MSM8974_COMMON_PATH := device/oppo/msm8974-common
 
 BOARD_VENDOR := nokia
 
-TARGET_OTA_ASSERT_DEVICE := martini,RM-937,RM-938,RM-939,RM-940
+# Lumia 930 product codes. RM-1045 is the Lumia 930; RM-1087 is reported
+# as a 930 variant but not verified. The Lumia Icon / 929 (RM-927,
+# "vanquish") ships a different Windows firmware set and is left out.
+# TODO: confirm the product code of the phone (DPP / Windows registry).
+TARGET_OTA_ASSERT_DEVICE := martini,RM-1045
 
 # Bootloader
 TARGET_BOOTLOADER_BOARD_NAME := MSM8974
@@ -36,8 +40,12 @@ TARGET_CPU_VARIANT := generic
 TARGET_CPU_VARIANT_RUNTIME := krait
 
 # Kernel
-# Boot chain: Nokia UEFI -> bootmgr -> BootShim -> lk1st (lk2nd) -> boot.img.
-# lk1st picks the single DTB appended to zImage-dtb. The Windows Phone
+# Boot chain: Nokia UEFI -> bootmgr -> BootShim -> lk1st (lk2nd, branch
+# martini) -> boot.img, as on the Lumia 1520. On the 930 the ELF that
+# BootShim loads must have its entry point at 0x7cc00000 (0x0ff00000 on the
+# 1520): that only concerns lk1st, not this boot image.
+# lk1st picks the single DTB appended to zImage-dtb (msm8974-v2.2-martini,
+# compatible "nokia,martini"). The Windows Phone
 # TrustZone resets the SoC on SCM SMP bring-up and has no power collapse:
 # the kernel handles it (msm_tz_restricted) and starts cores 1-3 through the
 # UEFI parking protocol mailboxes instead (no CPU hotplug).
@@ -52,7 +60,8 @@ BOARD_KERNEL_CMDLINE := androidboot.hardware=martini androidboot.bootdevice=msm_
     androidboot.selinux=permissive
 # lk1st loads the kernel at 0x10008000, ramdisk at 0x14000000, tags at
 # 0x13e00000 (it ignores the header, these keep the image consistent);
-# the kernel runs with PHYS_OFFSET 0x10000000.
+# the kernel runs with PHYS_OFFSET 0x10000000. Same values as the 1520:
+# TODO: check the load addresses of the martini lk1st on the phone.
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_MKBOOTIMG_ARGS := --ramdisk_offset 0x04000000 --tags_offset 0x03e00000
 BOARD_RAMDISK_USE_XZ := true
