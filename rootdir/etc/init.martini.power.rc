@@ -56,13 +56,11 @@ on boot
     write /sys/module/cpu_boost/parameters/input_boost_freq 1497600
     write /sys/module/cpu_boost/parameters/input_boost_ms 40
 
-    # The OnePlus One writes qcom,cpubw.40: on the 1520 the same msm8974.dtsi
-    # node is numbered 41 (the auto-numbered devices before it differ).
-    # TODO: check the number on the 930 (ls /sys/class/devfreq).
-    write /sys/class/devfreq/qcom,cpubw.41/governor "cpubw_hwmon"
-    # GPU: msm-adreno-tz is the kernel's default governor and decides in the
-    # kernel (no TrustZone DCVS calls on the Windows Phone TrustZone),
-    # nothing to write here.
+    # CPU bandwidth (cpubw) governor: set after boot by init.martini.power.sh,
+    # whatever the qcom,cpubw.<N> number of the devfreq node (40 on the
+    # OnePlus One, 41 on the 1520). GPU: msm-adreno-tz is the kernel's
+    # default governor and decides in the kernel (no TrustZone DCVS calls
+    # on the Windows Phone TrustZone), nothing to write here.
 
     # Perf locks of the power HAL (libmartini-perflock, running as system):
     # interaction, launch, display and profile boosts move these values,
@@ -109,6 +107,11 @@ on property:recovery.perf.mode=0
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "interactive"
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "interactive"
+
+# Late, so that a problem of the Krait L2 monitor behind cpubw_hwmon leaves
+# time to setprop persist.vendor.martini.cpubw_hwmon 0 over adb.
+on property:sys.boot_completed=1 && property:persist.vendor.martini.cpubw_hwmon=1
+    exec - root root -- /vendor/bin/init.martini.power.sh
 
 on property:dev.bootcomplete=1
     setprop sys.io.scheduler "bfq"

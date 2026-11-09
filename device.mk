@@ -341,11 +341,17 @@ PRODUCT_PACKAGES += \
     android.hardware.power-service-qti \
     libmartini-perflock
 
+# cpubw_hwmon on the CPU bandwidth devfreq node after boot
+# (init.martini.power.sh); 0 keeps the device tree "cpufreq" governor.
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.martini.cpubw_hwmon=1
+
 # Rootdir
 PRODUCT_PACKAGES += \
     fstab.martini \
     init.martini.rc \
     init.martini.power.rc \
+    init.martini.power.sh \
     init.martini.qcom.rc \
     init.martini.wifi.sh \
     init.qcom.bt.sh \
