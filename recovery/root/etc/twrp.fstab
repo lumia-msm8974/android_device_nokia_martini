@@ -1,0 +1,25 @@
+# TWRP fstab for the Nokia Lumia 930 (martini), Android partition layout of
+# the installer (same as the Lumia 1520) (aboot, boot, recovery, misc, modem, cache, persist,
+# persistent, fsc, fsg, metadata, ssd, modemst1, modemst2, vendor, system,
+# userdata).
+# <mount point>  <type>  <device>                                         <flags>
+
+/system          ext4    /dev/block/platform/msm_sdcc.1/by-name/system
+/system_image    emmc    /dev/block/platform/msm_sdcc.1/by-name/system
+/data            ext4    /dev/block/platform/msm_sdcc.1/by-name/userdata
+/cache           ext4    /dev/block/platform/msm_sdcc.1/by-name/cache
+/persist         ext4    /dev/block/platform/msm_sdcc.1/by-name/persist    flags=backup=1;display="Persist"
+/boot            emmc    /dev/block/platform/msm_sdcc.1/by-name/boot
+/recovery        emmc    /dev/block/platform/msm_sdcc.1/by-name/recovery   flags=backup=1
+/misc            emmc    /dev/block/platform/msm_sdcc.1/by-name/misc
+/firmware        vfat    /dev/block/platform/msm_sdcc.1/by-name/modem      flags=fsflags=ro;display="Firmware"
+/aboot           emmc    /dev/block/platform/msm_sdcc.1/by-name/aboot      flags=backup=1;display="lk1st (aboot)"
+
+# Modem EFS copied from the Windows MODEM_FS1/2, FSG and FSC partitions:
+# backed up together, never wiped
+/efs1            emmc    /dev/block/platform/msm_sdcc.1/by-name/modemst1   flags=backup=1;display="EFS"
+/efs2            emmc    /dev/block/platform/msm_sdcc.1/by-name/modemst2   flags=backup=1;subpartitionof=/efs1
+/efsg            emmc    /dev/block/platform/msm_sdcc.1/by-name/fsg        flags=backup=1;subpartitionof=/efs1
+/efsc            emmc    /dev/block/platform/msm_sdcc.1/by-name/fsc        flags=backup=1;subpartitionof=/efs1
+
+/usb_otg         auto    /dev/block/sda1         /dev/block/sda            flags=removable;storage;display="USB OTG"
