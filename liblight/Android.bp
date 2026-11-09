@@ -5,8 +5,8 @@
 //
 
 // Lights HAL: display backlight (AMOLED panel brightness through the MDSS
-// lcd-backlight device) and, when the kernel registers the PM8941 KPDBL rows,
-// the capacitive key backlight. The Lumia 930 has no notification LED.
+// lcd-backlight device) and the capacitive key backlight (PM8941 KPDBL
+// rows). The Lumia 930 has no notification LED.
 cc_library_shared {
     name: "lights.msm8974",
     relative_install_path: "hw",

@@ -10,11 +10,12 @@
  * driver, which exposes it as the lcd-backlight LED class device
  * (0..max_brightness, usually 255). The three capacitive keys have
  * backlight LEDs (Windows touch settings: LedCount 3), lit on the 1520 by
- * the PM8941 KPDBL rows (kpdbl-pwm-1..4). The martini kernel keeps KPDBL
- * off until the 930 ACPI tables confirm it, so the buttons light is only
- * offered when those LED class devices exist. No notification LED.
+ * the PM8941 KPDBL rows (kpdbl-pwm-1..4), driven together; the stock ACPI
+ * tables of the 930 give its key light the same PMIC block. The buttons
+ * light is only offered when those LED class devices exist. No
+ * notification LED.
  * TODO: check on the phone that the martini panel driver registers
- * lcd-backlight and which range it uses, and the KPDBL rows.
+ * lcd-backlight and which range it uses, and which KPDBL row is wired.
  * Derived from the CAF/LineageOS msm8974 liblight.
  */
 
