@@ -103,6 +103,25 @@ UEFI framebuffer (see `device.mk`) if the MDSS panel driver does not work.
 The phone's own firmware and calibration are taken from its Windows
 firmware by `vendor/nokia/martini/extract-local.sh` and never committed.
 
+## Device settings
+
+[LumiaParts](https://github.com/lumia-msm8974/android_packages_apps_LumiaParts)
+(`packages/apps/LumiaParts`, branch `lineage-18.1`, shared with the 1520)
+adds *Settings > System > Lumia settings*, a launcher icon and two Quick
+Settings tiles for what this tree provides:
+
+- performance profiles: the five LineageOS profiles of
+  `android.hardware.power-service-qti` (`TARGET_USES_INTERACTION_BOOST`),
+  applied by `libmartini-perflock`;
+- double tap to wake (`TARGET_TAP_TO_WAKE_NODE`, `config_supportDoubleTapWake`);
+- capacitive keys: on-screen navigation bar through the key disabler
+  (`vendor.lineage.touch@1.0-service.martini`) and the key backlight
+  (PM8941 KPDBL, `config_deviceSupportsButtonBrightnessControl`).
+
+It only changes the LineageOS and AOSP settings that LineageParts also
+uses, so it needs no permission, init or SELinux change here. `device.mk`
+adds it when the app is checked out.
+
 ## Bring-up settings (turn off for releases)
 
 On non-user builds `device.mk` sets:
