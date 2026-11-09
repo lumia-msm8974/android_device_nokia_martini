@@ -60,7 +60,8 @@ on boot
     # whatever the qcom,cpubw.<N> number of the devfreq node (40 on the
     # OnePlus One, 41 on the 1520). GPU: msm-adreno-tz is the kernel's
     # default governor and decides in the kernel (no TrustZone DCVS calls
-    # on the Windows Phone TrustZone), nothing to write here.
+    # on the Windows Phone TrustZone); the power HAL only raises its floor
+    # (min_pwrlevel, below).
 
     # Perf locks of the power HAL (libmartini-perflock, running as system):
     # interaction, launch, display and profile boosts move these values,
@@ -77,6 +78,10 @@ on boot
     chown system system /sys/devices/system/cpu/cpufreq/interactive/hispeed_freq
     chown system system /sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load
     chown system system /sys/devices/system/cpu/cpufreq/interactive/io_is_busy
+    # GPU floor during interaction, fling and launch boosts (389 MHz by
+    # default, persist.vendor.perflock.gpu_floor_mhz, 0 = off); the
+    # thermal limit (max_gpuclk, thermal-engine) stays above it in kgsl.
+    chown system system /sys/class/kgsl/kgsl-3d0/min_pwrlevel
 
 on charger
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "powersave"

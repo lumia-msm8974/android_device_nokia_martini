@@ -3,3 +3,6 @@ allow hal_power_default sysfs_touchpanel:file rw_file_perms;
 # Perf locks (libmartini-perflock): cpufreq limits and interactive governor
 allow hal_power_default sysfs_devices_system_cpu:dir r_dir_perms;
 allow hal_power_default sysfs_devices_system_cpu:file rw_file_perms;
+# GPU floor (libmartini-perflock): kgsl min_pwrlevel, gpu_available_frequencies
+allow hal_power_default sysfs_kgsl:dir r_dir_perms;
+allow hal_power_default sysfs_kgsl:file rw_file_perms;

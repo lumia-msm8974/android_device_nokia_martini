@@ -43,7 +43,10 @@ the 930):
   bring-up (cores 1-3 through the UEFI parking mailboxes), no power
   collapse, no hotplug, no QSEE (software keymaster, gatekeeper, FDE);
 - helpers: `libmartini-perflock` (power HAL boosts without
-  mpdecision), `libbtqmishim`, `libaudioclient_shim`;
+  mpdecision; it also holds the Adreno at 389 MHz or faster during touch,
+  fling and launch boosts, `persist.vendor.perflock.gpu_floor_mhz`, 0 =
+  off, and keeps the CPU boost through continuous scrolling),
+  `libbtqmishim`, `libaudioclient_shim`;
 - modem: PIL with SSD decryption in the kernel, `lumia-uim-bootstrap`
   (opens the USIM provisioning session the Windows MPSS leaves DETECTED; it
   accepts `ro.boot.hardware` bandit and martini), QMI RIL from the generic
