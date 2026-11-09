@@ -1,29 +1,36 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Lumia 930 (martini): the Lumia 1520 (bandit) mixer paths, unchanged.
-     The 930 has the same WCD9320 (Taiko) codec and the same TI TAS2552
-     loudspeaker amplifier on BLSP1 QUP5 (I2C 0x40, enable PM8941 GPIO20)
-     on the secondary MI2S; the LineageOS 17.1 martini port of 2314372037
-     also plays the speaker through SEC_MI2S_RX and the TAS2552.
-     TODO (unverified on the 930): microphone wiring (the DMIC numbering
-     below was measured on the 1520; the 17.1 port uses ADC1-3 inherited
-     from hammerhead, also unverified), earpiece and headset routes, TAS2552
-     gain. Check them against the 930 ACDB files and on the phone.
+<!-- Lumia 930 (martini). WCD9320 (Taiko) codec on SLIMbus and TI TAS2552
+     loudspeaker amplifier (BLSP1 QUP5, I2C 0x40, enable PM8941 GPIO20) on
+     the secondary MI2S, as on the Lumia 1520 (bandit), whose paths these
+     are. Never tried on a 930.
 
-     Original 1520 notes. Based on the OnePlus One (bacon, LineageOS
-     android_device_oneplus_bacon 7a4af4b), which has the same WCD9320
-     (Taiko) codec and msm8974-taiko sound card. Routes from the stock
-     Windows audio calibration (codec path names per ACDB device):
-       - earpiece: EAR (EAROUT_SPEAKER, ACDB 7)
-       - headset: HPHL/HPHR (HEADSET_SPEAKER_STEREO, ACDB 10); headset mic
-         on ADC2 (ACDB 8)
-       - microphones: four digital mics. Handset mic DMIC3 (ACDB 4,
-         measured: the stock name DMIC_1 is not the codec numbering),
-         speakerphone mic DMIC4 (ACDB 11), broadside DMIC1+2, endfire and
-         stereo DMIC2+4, quad DMIC1-4.
-       - loudspeaker: TI TAS2552 amplifier (I2C 0x40 on BLSP1 QUP5) on the
-         secondary MI2S (ACDB 70), not a codec output; see the "sec-mi2s"
-         paths and the "spk" path.
-     Listening tests still pending: kit/audio in the bandit workspace. -->
+     Why the 1520 routes apply: the stock RM-1045 firmware describes the
+     audio hardware exactly as the 1520 one. The ADSP, codec, MBHC and QCRT
+     ACPI tables are identical, the codec driver binary is the same, and the
+     930 calibration (ACDB, DEVICE.SOC_QC8974.MARTINI) maps every device to
+     the same codec path as the 1520 one (only the tuning data differs):
+       - earpiece: EAR (HANDSET_SPKR, ACDB 7 -> EAROUT_SPEAKER)
+       - headset: HPHL/HPHR (HEADSET_SPKR_STEREO, ACDB 10); headset mic on
+         ADC2 with MIC BIAS2 (HEADSET_MIC, ACDB 8 -> ADC_2)
+       - handset mic: ACDB 4 -> DMIC_1; speakerphone mic: ACDB 11 -> DMIC_4;
+         broadside DMIC_1_2, endfire DMIC_2_4, camera DMIC_1_2_3_4 (four
+         digital mics)
+       - loudspeaker: SEC_MI2S_RX (ACDB 70), not a codec output; see the
+         "sec-mi2s" paths and the "spk" path
+     The stock DMIC names do not follow the codec numbering: on the 1520 the
+     handset mic measured on DMIC3 (DMIC3 -50 dBFS, DMIC4 -66, DMIC1 -74,
+     DMIC2 and DMIC5/6 silent with speech held as in a call). The 930 runs
+     the same driver and tables, so it gets the same inputs: main DMIC3,
+     speakerphone DMIC4, second mic of the dual-mic paths DMIC1. To check on
+     the phone (see DEVICE-MARTINI.md, "Audio").
+
+     Vibra: the 930 drives its motor through the codec (stock
+     hwnvibraaudiocodec); "vibra-lineout" is a test path for that route,
+     not used by the HAL. No other path may use LINEOUT2/LINEOUT4.
+
+     Original 1520 notes: based on the OnePlus One (bacon, LineageOS
+     android_device_oneplus_bacon 7a4af4b), which has the same codec and
+     msm8974-taiko sound card. -->
 <mixer>
     <!-- These are the initial mixer settings -->
     <ctl name="Voice Rx Device Mute" id="0" value="0" />
@@ -61,7 +68,7 @@
     <ctl name="RX4 Digital Volume" value="0" />
     <ctl name="RX5 Digital Volume" value="0" />
     <ctl name="RX6 Digital Volume" value="0" />
-    <ctl name="RX7 Digital Volume" value="-" />
+    <ctl name="RX7 Digital Volume" value="0" />
     <ctl name="ADC1 Volume" value="0" />
     <ctl name="ADC2 Volume" value="0" />
     <ctl name="ADC3 Volume" value="19" />
@@ -873,9 +880,9 @@
         <ctl name="IIR1 INP1 MUX" value="DEC5" />
     </path>
 
-    <!-- Main mic: DMIC3. Measured with speech held as in a call: DMIC3
-         about -50 dBFS, DMIC4 -66, DMIC1 -74, DMIC2 silent. The stock
-         calibration name DMIC_1 does not follow the codec numbering. -->
+    <!-- Main mic: DMIC3 (stock HANDSET_MIC, ACDB 4, path DMIC_1). Measured
+         on the 1520 with speech held as in a call: DMIC3 about -50 dBFS,
+         DMIC4 -66, DMIC1 -74, DMIC2 silent. -->
     <path name="main-mic">
         <ctl name="AIF1_CAP Mixer SLIM TX7" value="1"/>
         <ctl name="SLIM TX7 MUX" value="DEC3" />
@@ -883,7 +890,8 @@
         <ctl name="DEC3 Volume" value="84" />
     </path>
 
-    <!-- speakerphone mic (SPKR_PHONE_MIC: DMIC4) -->
+    <!-- speakerphone mic (SPKR_PHONE_MIC, stock DMIC_4: codec DMIC4, live
+         on the 1520) -->
     <path name="anc-mic">
         <ctl name="DEC4 MUX" value="DMIC4" />
         <ctl name="DEC4 Volume" value="84" />
@@ -961,17 +969,19 @@
     </path>
 
     <!-- Dual-mic recording -->
-    <!-- HANDSET_MIC_ENDFIRE / SPKR_MIC_STEREO: DMIC2 + DMIC4 -->
+    <!-- Two mics: main DMIC3 + DMIC1. The stock endfire pair DMIC_2_4
+         would take DMIC2, silent on the 1520; DMIC1 is the live mic
+         farthest from the mouth there (-74 dBFS against -50 for DMIC3). -->
     <path name="handset-dmic">
         <ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
         <ctl name="AIF1_CAP Mixer SLIM TX8" value="1" />
         <ctl name="SLIM_0_TX Channels" value="Two" />
-        <ctl name="SLIM TX7 MUX" value="DEC2" />
-        <ctl name="DEC2 MUX" value="DMIC2" />
-        <ctl name="DEC2 Volume" value="84" />
-        <ctl name="SLIM TX8 MUX" value="DEC4" />
-        <ctl name="DEC4 MUX" value="DMIC4" />
-        <ctl name="DEC4 Volume" value="84" />
+        <ctl name="SLIM TX7 MUX" value="DEC3" />
+        <ctl name="DEC3 MUX" value="DMIC3" />
+        <ctl name="DEC3 Volume" value="84" />
+        <ctl name="SLIM TX8 MUX" value="DEC1" />
+        <ctl name="DEC1 MUX" value="DMIC1" />
+        <ctl name="DEC1 Volume" value="84" />
     </path>
 
     <path name="dmic-endfire">
@@ -1047,10 +1057,29 @@
     </path>
 
 
-    <!-- MAD on the handset mic (DMIC1) -->
+    <!-- MAD on the handset mic (DMIC3) -->
     <path name="listen-handset-mic">
         <ctl name="MADONOFF Switch" value="1" />
-        <ctl name="MAD Input" value="DMIC1" />
+        <ctl name="MAD Input" value="DMIC3" />
+    </path>
+
+    <!-- Vibra through the codec, test only (not a HAL device). The stock
+         930 firmware drives the motor from the codec (hwnvibraaudiocodec,
+         ACPI NOKIA_VIBRA with PM8941 GPIO 8 as its only resource); the
+         LineageOS 17.1 port of 2314372037 fed the motor driver ("N2183")
+         from the LINEOUT2/LINEOUT4 differential pair: RX5 to LINEOUT2 and,
+         inverted through RDAC7, to LINEOUT4. The driver also needs GPIO 8
+         high (today driven by the PMIC vibrator). Test with tinyplay on
+         MultiMedia1 while the vibrator is enabled. -->
+    <path name="vibra-lineout">
+        <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia1" value="1" />
+        <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
+        <ctl name="SLIM_0_RX Channels" value="One" />
+        <ctl name="RX5 MIX1 INP1" value="RX1" />
+        <ctl name="RDAC7 MUX" value="DEM5_INV" />
+        <ctl name="RX5 Digital Volume" value="84" />
+        <ctl name="LINEOUT2 Volume" value="12" />
+        <ctl name="LINEOUT4 Volume" value="12" />
     </path>
 
     <path name="voice-rx">

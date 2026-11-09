@@ -41,10 +41,10 @@ PRODUCT_COPY_FILES += \
 
 # Audio
 # Policy and mixer paths: the msm8974 common tree leaves them to each device.
-# mixer_paths.xml starts from the OnePlus One one (same WCD9320 codec) with
-# the 1520 microphones; audio_platform_info.xml moves the loudspeaker to the
-# secondary MI2S amplifier (TAS2552, as on the 1520). Both are the bandit
-# files, unverified on the 930.
+# mixer_paths.xml: the 1520 paths (OnePlus One base, same WCD9320 codec),
+# which the stock 930 audio configuration matches; audio_platform_info.xml
+# puts the loudspeaker on the secondary MI2S amplifier (TAS2552) with the
+# stock ACDB IDs. Unverified on a 930 (DEVICE-MARTINI.md, "Audio").
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/audio_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info.xml \
     $(LOCAL_PATH)/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
