@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2013 The Android Open Source Project
+     Copyright (C) 2026 The LineageOS Project
+
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+     Lumia 930 (martini) power profile. Nothing here was measured on a 930.
+
+     - battery.capacity: BV-5QW, 2420 mAh (rated capacity of the Nokia
+       BATTERY.PROVISION characterization, the qcom,fcc-mah of the kernel
+       profile; also the published figure).
+     - CPU: one cluster of four Krait 400 cores. The speeds are the cpufreq
+       table of this kernel for an MSM8974 v2 of speed bin 2 (top step
+       2150400 kHz, as read on the Lumia 1520; the 930's Windows power
+       engine settings name a 2150 MHz cap, disabled): the
+       qcom,msm-cpufreq table of msm8974.dtsi rounded
+       by the Krait clock driver to the fuse-selected voltage plan. A speed
+       bin 1 chip tops at 2265600 kHz, a speed bin 0 chip (or an unknown
+       PVS table) at 1958400 kHz: check
+       /sys/devices/system/cpu/cpu0/cpufreq/stats/time_in_state.
+       Currents: Nexus 5 (hammerhead, MSM8974 v2) profile, measured by the
+       manufacturer on the same SoC and cpufreq steps; 2150400 kHz is
+       interpolated between its 1958400 and 2265600 kHz values.
+     - Everything else: Nexus 5 values as placeholders (different panel,
+       Wi-Fi and Bluetooth chip, camera), not measured on a 930.
+-->
+<device name="Android">
+    <!-- All values are in mA except as noted -->
+    <item name="none">0</item>
+    <!-- Unmeasured (Nexus 5 LCD; the 930 has an AMOLED panel) -->
+    <item name="screen.on">82.75</item>
+    <item name="screen.full">201.16</item>
+    <!-- Unmeasured (Nexus 5) -->
+    <item name="camera.avg">804.85</item>
+    <item name="camera.flashlight">542.0</item>
+    <item name="bluetooth.active">51.55</item>
+    <item name="bluetooth.on">0.79</item>
+    <item name="wifi.on">3.5</item>
+    <item name="wifi.active">73.24</item>
+    <item name="wifi.scan">75.48</item>
+    <item name="audio">0.1</item>
+    <item name="video">0.1</item>
+    <item name="gps.on">76.23</item>
+    <item name="radio.active">185.19</item>
+    <item name="radio.scanning">99.2</item>
+    <array name="radio.on"> <!-- Strength 0 to BINS-1 -->
+        <value>4.8</value>
+        <value>1.11</value>
+    </array>
+
+    <array name="cpu.clusters.cores">
+        <value>4</value>
+    </array>
+    <array name="cpu.core_speeds.cluster0">
+        <value>300000</value>
+        <value>422400</value>
+        <value>652800</value>
+        <value>729600</value>
+        <value>883200</value>
+        <value>960000</value>
+        <value>1036800</value>
+        <value>1190400</value>
+        <value>1267200</value>
+        <value>1497600</value>
+        <value>1574400</value>
+        <value>1728000</value>
+        <value>1958400</value>
+        <value>2150400</value> <!-- speed bin 2; 2265600 on bin 1, absent on bin 0 -->
+    </array>
+    <!-- Nexus 5 values, unmeasured on the 930 -->
+    <item name="cpu.suspend">3.2</item>
+    <item name="cpu.idle">17.4</item>
+    <array name="cpu.core_power.cluster0">
+        <value>57.9</value>   <!-- 300 MHz -->
+        <value>88.2</value>   <!-- 422.4 MHz -->
+        <value>99.6</value>   <!-- 652.8 MHz -->
+        <value>138.8</value>  <!-- 729.6 MHz -->
+        <value>149.6</value>  <!-- 883.2 MHz -->
+        <value>170.2</value>  <!-- 960.0 MHz -->
+        <value>178.3</value>  <!-- 1036.8 MHz -->
+        <value>189.1</value>  <!-- 1190.4 MHz -->
+        <value>232.1</value>  <!-- 1267.2 MHz -->
+        <value>256.5</value>  <!-- 1497.6 MHz -->
+        <value>266.4</value>  <!-- 1574.4 MHz -->
+        <value>287.7</value>  <!-- 1728.0 MHz -->
+        <value>325.7</value>  <!-- 1958.4 MHz -->
+        <value>363.5</value>  <!-- 2150.4 MHz, interpolated -->
+    </array>
+
+    <item name="battery.capacity">2420</item>
+
+    <!-- Unmeasured (Nexus 5): mA, from .0801 s per scan and 75.48 mA while
+         scanning -->
+    <array name="wifi.batchedscan">
+        <value>.0076</value> <!-- 1-8/hr -->
+        <value>.0613</value> <!-- 9-64/hr -->
+        <value>.4845</value> <!-- 65-512/hr -->
+        <value>3.870</value> <!-- 513-4096/hr -->
+        <value>30.96</value> <!-- 4097-?/hr -->
+    </array>
+</device>
