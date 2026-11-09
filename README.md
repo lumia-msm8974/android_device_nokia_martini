@@ -86,9 +86,11 @@ Adapted for the 930:
   the passive/critical temperatures of the stock DSDT thermal zones where
   they use a sensor the blob reads (TSENS, PM8941 die, PA_THERM): GPU
   step-wise at 85 C, CPU at 83 C (tsens 2) and 95 C (tsens 0), shutdown at
-  105 C (90 C on tsens 2, 85 C on PA_THERM). Core set point 75 C as on
-  the OnePlus One, because Windows adds skin zones on a thermistor this
-  blob cannot read; no hotplug actions;
+  105 C (90 C on tsens 2, 85 C on PA_THERM). Skin limits from the 14
+  Windows zones on SYS_THERM2 (46-54 C: CPU, GPU, charging current,
+  display, camera; shutdown at 56 C), read as `pa_therm1`: this needs the
+  kernel that renames the ADC_TM zones (`martini-thermal-adc`). Core set
+  point 75 C as on the OnePlus One; no hotplug actions;
 - CPU bandwidth: `init.martini.power.sh` sets `cpubw_hwmon` on whatever
   `qcom,cpubw.<N>` node the kernel creates (opt out with
   `persist.vendor.martini.cpubw_hwmon=0`);
@@ -182,7 +184,9 @@ To test on the phone:
       mailboxes; cpufreq range and speed bin (top step 1958400, 2150400 or
       2265600 kHz, `power_profile.xml`);
 - [ ] thermal-engine: sections loaded, GPU device found, `cpubw_hwmon`
-      active, temperatures under load;
+      active, temperatures under load; `pa_therm1` (skin) against the
+      temperature of the back cover before trusting the skin rules;
+- [ ] GPU floor: `min_pwrlevel` at 1 while scrolling, back to 3 after;
 - [ ] MDSS panel and `lcd-backlight` range; doze;
 - [ ] touch, double tap to wake, keys and key backlight (which KPDBL row);
 - [ ] NFC (PN544 with the 930 EEPROM settings, SIM card emulation);
