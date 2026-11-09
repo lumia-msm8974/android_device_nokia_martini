@@ -184,12 +184,18 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.hardware.egl=adreno
 endif
 
-# Bring-up builds (userdebug/eng). TODO: remove for release builds.
+# Bring-up builds (userdebug/eng). TODO: remove both for release builds.
 #  - no RescueParty: a crash loop of a system app during bring-up must not
-#    send the phone to the "factory reset?" recovery screen.
+#    send the phone to the "factory reset?" recovery screen;
+#  - boot log on /data/vendor/bootlog (init.martini.bootlog.sh): these
+#    phones have no pstore or last_kmsg, and the periodic copy costs eMMC
+#    writes.
 ifneq ($(TARGET_BUILD_VARIANT),user)
 PRODUCT_SYSTEM_PROPERTIES += \
     persist.sys.disable_rescue=true
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.martini.bootlog=1
 endif
 
 # GPS: the msm8974-common location HAL (gps.msm8974, built from source)
@@ -339,6 +345,7 @@ PRODUCT_PACKAGES += \
     init.martini.qcom.rc \
     init.martini.wifi.sh \
     init.qcom.bt.sh \
+    init.martini.bootlog.sh \
     libbtqmishim \
     init.qcom.usb.rc \
     ueventd.martini.rc

@@ -1,0 +1,20 @@
+# Bring-up boot log (init.martini.bootlog.sh): kernel log, processes,
+# properties and logcat copied to /data/vendor/bootlog. The service only
+# starts on non-user builds (persist.vendor.martini.bootlog), where the
+# domain is permissive: it reads a bit of everything, and it is a debugging
+# aid to remove for releases, not a service to confine.
+type martini_bootlog, domain;
+type martini_bootlog_exec, exec_type, vendor_file_type, file_type;
+type martini_bootlog_data_file, file_type, data_file_type;
+
+init_daemon_domain(martini_bootlog)
+
+allow martini_bootlog vendor_shell_exec:file rx_file_perms;
+allow martini_bootlog vendor_toolbox_exec:file rx_file_perms;
+allow martini_bootlog vendor_data_file:dir search;
+allow martini_bootlog martini_bootlog_data_file:dir rw_dir_perms;
+allow martini_bootlog martini_bootlog_data_file:file create_file_perms;
+
+userdebug_or_eng(`
+  permissive martini_bootlog;
+')

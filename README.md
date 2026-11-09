@@ -97,6 +97,18 @@ UEFI framebuffer (see `device.mk`) if the MDSS panel driver does not work.
 The phone's own firmware and calibration are taken from its Windows
 firmware by `vendor/nokia/martini/extract-local.sh` and never committed.
 
+## Bring-up settings (turn off for releases)
+
+On non-user builds `device.mk` sets:
+
+- `persist.sys.disable_rescue=true`: no RescueParty factory reset prompt
+  after a crash loop;
+- `persist.vendor.martini.bootlog=1`: `init.martini.bootlog.sh` copies
+  `dmesg`, `ps -A`, `getprop` and the recent logcat to
+  `/data/vendor/bootlog/` every 5 s for 30 minutes of each boot (previous
+  boot in `*.prev.txt`), since the phone has no pstore or last_kmsg. The
+  periodic `sync` costs eMMC writes: it must be off in release builds.
+
 ## TODO
 
 To read from the phone's DSDT/SSDT and registry:

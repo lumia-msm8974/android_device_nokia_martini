@@ -35,3 +35,17 @@ on boot
 # Android showed the "serial console enabled" performance notification.
 on property:init.svc.console=running
     stop console
+
+# Bring-up boot log (init.martini.bootlog.sh), on when
+# persist.vendor.martini.bootlog=1 (set on non-user builds by device.mk).
+# TODO: off for releases.
+service vendor.martini_bootlog /vendor/bin/init.martini.bootlog.sh
+    class late_start
+    user root
+    group root log
+    disabled
+    oneshot
+
+on post-fs-data && property:persist.vendor.martini.bootlog=1
+    mkdir /data/vendor/bootlog 0750 root root
+    start vendor.martini_bootlog
