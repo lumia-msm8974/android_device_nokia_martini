@@ -295,13 +295,8 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.flash-autofocus.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.front.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml \
-    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
-    frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.compass.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
-    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml \
     frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml \
-    frameworks/native/data/etc/android.hardware.sensor.stepcounter.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.stepcounter.xml \
-    frameworks/native/data/etc/android.hardware.sensor.stepdetector.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.stepdetector.xml \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml \
     frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
@@ -340,11 +335,64 @@ PRODUCT_COPY_FILES += \
     $(MSM8974_COMMON_PATH)/seccomp/mediacodec.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediacodec.policy
 
 # Sensors: sensors.martini on the kernel input drivers (sensors/), loaded in
-# passthrough mode by system_server (group input) through the 1.0 impl.
-# Only the APDS-9930 light/proximity sensor is known on the 930 so far.
+# passthrough mode by system_server (group input) through the 1.0 impl. It
+# drives the APDS-9930 light/proximity sensor, on the application processor.
 PRODUCT_PACKAGES += \
     android.hardware.sensors@1.0-impl \
     sensors.martini
+
+# Accelerometer, gyroscope and magnetometer sit behind the Qualcomm Sensor
+# Core on the ADSP (ACPI \_SB.SEN1, QCOM2495), as on Windows Phone.
+# MARTINI_SENSORS_SSC=true adds that stack (sensors/ssc/): the registry of
+# the 930 for sensors.qcom (sensor_def_qcomdev.conf, from the Windows
+# qcSensors settings), the daemon start, and the multihal config of the 1.0
+# impl (vendor/etc/sensors/hals.conf), which loads sensors.martini and the
+# Qualcomm sensors.msm8974 HAL side by side. Blobs: msm8974-common.
+# Off by default: never run on a 930, and the Windows ADSP image may not
+# accept this daemon; a stuck HAL would stall system_server. Rollback on the
+# phone: setprop persist.vendor.martini.ssc 0 (init.martini.ssc.rc).
+# No step counter/detector: on Windows they are Nokia ADSP algorithms
+# (SSC_NOKIA_*) that the Qualcomm HAL cannot reach.
+MARTINI_SENSORS_SSC ?= false
+
+ifeq ($(MARTINI_SENSORS_SSC),true)
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/sensors/ssc/sensor_def_qcomdev.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/sensor_def_qcomdev.conf \
+    $(LOCAL_PATH)/sensors/ssc/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf \
+    $(LOCAL_PATH)/sensors/ssc/hals-martini.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals-martini.conf \
+    $(LOCAL_PATH)/sensors/ssc/init.martini.ssc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.martini.ssc.rc \
+    frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
+    frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
+    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml
+
+# Only the physical sensors from sensors.msm8974: its SAM algorithm
+# sensors need ADSP services that the Windows image does not publish (the
+# framework builds rotation vector, game and geomagnetic rotation vector
+# from the physical ones). The wake-up copies are left out as well.
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.martini.ssc=1 \
+    ro.qti.sdk.sensors.gestures=false \
+    ro.qti.sensors.amd=false \
+    ro.qti.sensors.cmc=false \
+    ro.qti.sensors.facing=false \
+    ro.qti.sensors.game_rv=false \
+    ro.qti.sensors.georv=false \
+    ro.qti.sensors.gtap=false \
+    ro.qti.sensors.ir_proximity=false \
+    ro.qti.sensors.pam=false \
+    ro.qti.sensors.pedometer=false \
+    ro.qti.sensors.pick_up=false \
+    ro.qti.sensors.rmd=false \
+    ro.qti.sensors.scrn_ortn=false \
+    ro.qti.sensors.smd=false \
+    ro.qti.sensors.step_counter=false \
+    ro.qti.sensors.step_detector=false \
+    ro.qti.sensors.tap=false \
+    ro.qti.sensors.tilt=false \
+    ro.qti.sensors.tilt_detector=false \
+    ro.qti.sensors.vmd=false \
+    ro.qti.sensors.wu=false
+endif
 
 # Thermal config
 PRODUCT_COPY_FILES += \

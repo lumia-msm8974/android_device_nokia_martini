@@ -13,7 +13,7 @@ ever run on a Lumia 930. Nothing here is verified on the hardware.
 | Wi-Fi / BT | WCNSS Pronto (WCN3680) |
 | Display | 5" 1080x1920 AMOLED, DSI video mode, ~441 ppi (density 480) |
 | Touch | Synaptics RMI4, BLSP1 I2C2 0x4b, IRQ GPIO61 |
-| Sensors | APDS-9930 light/proximity (BLSP1 I2C3 0x39); accelerometer, gyroscope, magnetometer not identified |
+| Sensors | APDS-9930 light/proximity (BLSP1 I2C3 0x39, application processor); accelerometer (0x1e), magnetometer (0x0f) and gyroscope (0x68) on BLSP2 QUP6 behind the ADSP Sensor Core |
 | Battery | BV-5QW, 2420 mAh (2500 mAh in some sources), Qi wireless charging |
 | Cameras | 20 MP PureView rear (ACPI QCOM2436), 1.2 MP front (QCOM2437): not supported |
 | Keys | volume up (PM8941 GPIO5), volume down (RESIN), camera focus/shutter (PM8941 GPIO4/3), power; on-screen navigation |
@@ -67,8 +67,14 @@ Adapted for the 930:
   and volume;
 - no microSD (fstab, TWRP);
 - sensors HAL: APDS-9930 light/proximity, also accepting the input names of
-  the 1520 driver (`bandit-light`, `bandit-prox`); the 3-axis sensors stay
-  unlisted until their chips are known;
+  the 1520 driver (`bandit-light`, `bandit-prox`). The 3-axis sensors are
+  driven by the Qualcomm Sensor Core on the ADSP, as on Windows: the
+  experimental stack in `sensors/ssc/` (registry of the 930 from its Windows
+  qcSensors settings, `sensors.qcom`, `sensors.msm8974` next to
+  `sensors.martini` through the 1.0 multihal) is only built with
+  `MARTINI_SENSORS_SSC=true` and has never run on a 930;
+  `sensors/ssc/check-sensor-def.py` checks the registry against the Windows
+  values;
 - NFC: the legacy PN544 path is kept so the tree builds, but no EEPROM
   tuning is listed (the 1520 values belong to its antenna), so the NFC
   service does not initialise the chip.
@@ -77,7 +83,7 @@ Layout: `BoardConfig.mk`, `device.mk`, `lineage_martini.mk`; `init/`
 (`libinit_martini`), `liblight/`, `sensors/` (`sensors.martini`), `nfc/`
 (`nfc.martini`), `ril/`, `perf/`, `libshims/`, `rootdir/`
 (`fstab.martini`, `init.martini.*`, `ueventd.martini.rc`), `audio/`,
-`overlay/`, `sepolicy/`, `twrp/`.
+`overlay/`, `sepolicy/`, `twrp/`; `sensors/ssc/` (Sensor Core, optional).
 
 ## Building
 
@@ -101,9 +107,9 @@ firmware by `vendor/nokia/martini/extract-local.sh` and never committed.
 
 To read from the phone's DSDT/SSDT and registry:
 
-- [ ] accelerometer, gyroscope, magnetometer: chips, buses, addresses,
-      mounting matrices (`sensors/sensors_martini.h`, `ueventd.martini.rc`,
-      `sepolicy/genfs_contexts`);
+- [ ] accelerometer, gyroscope, magnetometer on the Sensor Core: does the
+      Windows ADSP image take the registry of `sensors.qcom`, and are the
+      axes right (`sensors/ssc/`, `MARTINI_SENSORS_SSC=true`)?
 - [ ] NFC controller: chip (PN544 like the 1520, or an NCI chip), bus,
       GPIOs, clock source, UICC/SWP wiring (`nfc/`);
 - [ ] capacitive navigation keys: does the touch controller report Back,
@@ -149,7 +155,13 @@ To test on the phone:
   that boots on the 930; used for comparison (TAS2552 speaker route,
   partition layout, key mappings).
 - KorelisLabs, [lumia-1520-mainline](https://github.com/KorelisLabs/lumia-1520-mainline):
-  boot chain, hardware map and TrustZone findings for the 1520.
+  boot chain, hardware map and TrustZone findings for the 1520 (also the
+  addresses of its BLSP2 QUP6 sensors, which the shared Sensor Core
+  configuration of the 930 points to).
+- sonic011gamer, [Lumia-Drivers](https://github.com/sonic011gamer/Lumia-Drivers)
+  (`c57daab`): the Windows driver packages of the 930; the Sensor Core
+  registry in `sensors/ssc/` is decoded from the qcSensors settings of the
+  `OEM.SOC_QC8974.NMO` package (and of the official FFU).
 - Android4Lumia950 (djokcho, EpicLPer, j0sh1x, sonic011gamer and the
   community): the Lumia 950/950 XL Android port this project follows.
 - msm8916-mainline, [lk2nd](https://github.com/msm8916-mainline/lk2nd), and

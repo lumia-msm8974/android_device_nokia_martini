@@ -191,10 +191,10 @@ service netmgrd /system/vendor/bin/netmgrd
     user root
     group root wifi wakelock radio inet oem_2950
 
-# QCOM sensor daemon: it talks to the sensor core on the ADSP (kernel
-# 4f1e8844 loads it on the 1520), but the sensors are driven by the kernel
-# input drivers and read by sensors.martini; kept off ("start sensors" to
-# try it).
+# QCOM sensor daemon: it serves the sensors registry and the Sensor1 API of
+# the Sensor Core on the ADSP (accelerometer, gyroscope, magnetometer of the
+# 930). Off unless the build has MARTINI_SENSORS_SSC=true, where
+# init.martini.ssc.rc starts it ("start sensors" to try it by hand).
 service sensors /system/vendor/bin/sensors.qcom
     class late_start
     user root
