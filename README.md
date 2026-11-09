@@ -62,7 +62,10 @@ the 930):
 Adapted for the 930:
 
 - product `lineage_martini`, model "Lumia 930", OTA assert `martini,RM-1045`;
-- density 480 (5" 1080p), AMOLED video mode panel: no doze display state;
+- density 480 (5" 1080p), AMOLED video mode panel; always-on display (off
+  by default) uses the display DOZE state, where the kernel keeps the MDP
+  streaming, puts the panel in DCS idle mode (Windows Glance sequence) and
+  holds a wakeup source (`doze_display_state_supported`, no doze suspend);
 - lights HAL: only the `lcd-backlight` device of the MDSS panel driver (the
   AMOLED brightness is a DCS command): no WLED fallback, no key backlight;
 - on-screen navigation bar (`config_showNavigationBar`,
@@ -187,7 +190,9 @@ To test on the phone:
       active, temperatures under load; `pa_therm1` (skin) against the
       temperature of the back cover before trusting the skin rules;
 - [ ] GPU floor: `min_pwrlevel` at 1 while scrolling, back to 3 after;
-- [ ] MDSS panel and `lcd-backlight` range; doze;
+- [ ] MDSS panel and `lcd-backlight` range; always-on display: idle mode
+      entry/exit, double tap from it, current draw against a normal screen
+      on (`/sys/module/mdss_fb/parameters/video_doze` 1/0);
 - [ ] touch, double tap to wake, keys and key backlight (which KPDBL row);
 - [ ] NFC (PN544 with the 930 EEPROM settings, SIM card emulation);
 - [ ] Wi-Fi, Bluetooth, modem (UIM bootstrap, SIM, data, calls), GPS;
