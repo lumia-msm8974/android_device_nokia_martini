@@ -123,13 +123,14 @@ on post-fs-data
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
 
-    # Bluetooth address provisioned by the installer, read by init.qcom.bt.sh
-    # (user bluetooth)
+    # The phone's own Wi-Fi NV and MAC addresses from /persist; the MAC
+    # files are created from DPP when the installer did not provision them
+    exec - root root -- /vendor/bin/init.martini.wifi.sh
+
+    # Bluetooth address (installer or init.martini.wifi.sh), read by
+    # init.qcom.bt.sh (user bluetooth)
     chown bluetooth bluetooth /persist/bdaddr.txt
     chmod 0644 /persist/bdaddr.txt
-
-    # The phone's own Wi-Fi NV and MAC addresses from /persist, if provisioned
-    exec - root root -- /vendor/bin/init.martini.wifi.sh
 
     # Load the Pronto firmware: the WCNSS driver starts it when
     # /dev/wcnss_wlan is opened (wcnss_service, built without QMI, would do

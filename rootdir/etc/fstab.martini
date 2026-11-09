@@ -16,6 +16,7 @@
 /dev/block/platform/msm_sdcc.1/by-name/userdata     /data           ext4    noatime,nosuid,nodev,barrier=1,data=ordered,noauto_da_alloc,errors=panic wait,check,formattable,latemount
 /dev/block/platform/msm_sdcc.1/by-name/cache        /cache          ext4    noatime,nosuid,nodev,barrier=1,data=ordered,noauto_da_alloc,errors=panic wait,check,formattable
 /dev/block/platform/msm_sdcc.1/by-name/persist      /persist        ext4    nosuid,nodev,barrier=1,data=ordered,nodelalloc,errors=panic wait,check,notrim
+/dev/block/platform/msm_sdcc.1/by-name/DPP          /mnt/vendor/dpp vfat    ro,nosuid,nodev,noexec,shortname=lower,uid=0,gid=0,dmask=0277,fmask=0377,context=u:object_r:martini_dpp_file:s0 wait,nofail
 /dev/block/platform/msm_sdcc.1/by-name/modem        /firmware       vfat    ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0 wait
 /dev/block/platform/msm_sdcc.1/by-name/boot         /boot           emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/recovery     /recovery       emmc    defaults                                                        defaults

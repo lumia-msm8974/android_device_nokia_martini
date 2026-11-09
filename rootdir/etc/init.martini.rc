@@ -3,6 +3,8 @@
 import /vendor/etc/init/hw/init.martini.qcom.rc
 
 on fs
+    # Windows provisioning partition, read-only (init.martini.wifi.sh)
+    mkdir /mnt/vendor/dpp 0500 root root
     mount_all /vendor/etc/fstab.martini --early
     start hwservicemanager
 

@@ -1,2 +1,6 @@
 # Touch controller attributes (wake_gesture), written by the power HAL
 type sysfs_touchpanel, sysfs_type, fs_type;
+
+# Windows provisioning partition (DPP, FAT), mounted read-only on
+# /mnt/vendor/dpp: Wi-Fi and Bluetooth addresses for init.martini.wifi.sh
+type martini_dpp_file, fs_type, contextmount_type;
