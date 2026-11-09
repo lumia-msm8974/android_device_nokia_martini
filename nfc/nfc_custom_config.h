@@ -3,12 +3,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *
- * libnfc-nxp build configuration for the Nokia Lumia 930 (PN544 assumed).
+ * libnfc-nxp build configuration for the Nokia Lumia 930 (NXP PN544, stock
+ * SSDT \_SB.NFC1 and the PN544 C3 firmware of the Windows NFC package).
  *
- * TODO: these are the Lumia 1520 values, kept only so that the legacy PN544
- * stack builds. The NFC chip of the 930, its clock source and its UICC/SWP
- * wiring are not known yet; read them from the DSDT and from the chip under
- * Windows before enabling NFC on the phone.
+ * Clock and HW_CONF are confirmed for the 930: its stock NFC driver writes
+ * 0x9809 = 0x02 and 0x9810 = 0x3C (registry EEConfigParms), as on the 1520,
+ * and the stock power data votes the BBCLK2 buffer for \_SB.NFC1. The UICC
+ * and SWP values below are the 1520 ones (not in the 930 registry).
+ * TODO: check the SIM card emulation path (UICC/SWP) on the phone.
  *
  * libnfc-nxp writes the clock, power and UICC access registers during every
  * initialisation from these values. Its defaults assume a crystal; on the

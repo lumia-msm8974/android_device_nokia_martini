@@ -274,10 +274,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     lumia-uim-bootstrap
 
-# NFC: the 1520 setup, NXP PN544 (HCI, pre-NCI) driven by the legacy NXP
-# stack (external/libnfc-nxp and the nxp variant of packages/apps/Nfc).
-# TODO: the 930 NFC chip is not identified yet (see nfc/nfc_hw.c); no
-# EEPROM tuning is listed, so the NFC service does not start the chip.
+# NFC: NXP PN544 (HCI, pre-NCI), wired as on the 1520 (stock SSDT
+# \_SB.NFC1), driven by the legacy NXP stack (external/libnfc-nxp and the
+# nxp variant of packages/apps/Nfc). EEPROM settings from the 930 stock
+# NFC driver configuration (nfc/nfc_hw.c). Unverified on the phone.
 PRODUCT_PACKAGES += \
     libnfc \
     libnfc_jni \
