@@ -43,7 +43,8 @@ PRODUCT_COPY_FILES += \
 # Policy and mixer paths: the msm8974 common tree leaves them to each device.
 # mixer_paths.xml starts from the OnePlus One one (same WCD9320 codec) with
 # the 1520 microphones; audio_platform_info.xml moves the loudspeaker to the
-# secondary MI2S amplifier.
+# secondary MI2S amplifier (TAS2552, as on the 1520). Both are the bandit
+# files, unverified on the 930.
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/audio/audio_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info.xml \
     $(LOCAL_PATH)/audio/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
@@ -54,8 +55,8 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml
 
-# The MTP ACDB files are generic fallbacks: the 1520's own calibration
-# (vendor proprietary-local/) wins when present.
+# The MTP ACDB files are generic fallbacks: the 930's own calibration
+# (vendor proprietary-local/, from its Windows firmware) wins when present.
 PRODUCT_COPY_FILES += \
     $(MSM8974_COMMON_PATH)/audio/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
     $(MSM8974_COMMON_PATH)/audio/acdb/MTP_Bluetooth_cal.acdb:$(TARGET_COPY_OUT_SYSTEM)/etc/acdbdata/MTP/MTP_Bluetooth_cal.acdb \

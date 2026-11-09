@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Lumia 1520 (martini). Based on the OnePlus One (bacon, LineageOS
+<!-- Lumia 930 (martini): the Lumia 1520 (bandit) mixer paths, unchanged.
+     The 930 has the same WCD9320 (Taiko) codec and the same TI TAS2552
+     loudspeaker amplifier on BLSP1 QUP5 (I2C 0x40, enable PM8941 GPIO20)
+     on the secondary MI2S; the LineageOS 17.1 martini port of 2314372037
+     also plays the speaker through SEC_MI2S_RX and the TAS2552.
+     TODO (unverified on the 930): microphone wiring (the DMIC numbering
+     below was measured on the 1520; the 17.1 port uses ADC1-3 inherited
+     from hammerhead, also unverified), earpiece and headset routes, TAS2552
+     gain. Check them against the 930 ACDB files and on the phone.
+
+     Original 1520 notes. Based on the OnePlus One (bacon, LineageOS
      android_device_oneplus_bacon 7a4af4b), which has the same WCD9320
      (Taiko) codec and msm8974-taiko sound card. Routes from the stock
      Windows audio calibration (codec path names per ACDB device):
@@ -13,7 +23,7 @@
        - loudspeaker: TI TAS2552 amplifier (I2C 0x40 on BLSP1 QUP5) on the
          secondary MI2S (ACDB 70), not a codec output; see the "sec-mi2s"
          paths and the "spk" path.
-     Listening tests still pending: kit/audio in the martini workspace. -->
+     Listening tests still pending: kit/audio in the bandit workspace. -->
 <mixer>
     <!-- These are the initial mixer settings -->
     <ctl name="Voice Rx Device Mute" id="0" value="0" />
