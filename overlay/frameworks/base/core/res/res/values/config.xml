@@ -85,4 +85,12 @@
     <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
     <bool name="config_dozeAlwaysOnEnabled">false</bool>
     <integer name="config_screenBrightnessDoze">17</integer>
+
+    <!-- Lighter recents snapshots. On every app close system_server reads the
+         app window back from the GPU and compresses it for the recents screen:
+         about 220 ms of CPU per close at full size on the 1520. Smaller, 16 bit
+         snapshots cut the readback and the JPEG work, as on Android Go. -->
+    <item name="config_highResTaskSnapshotScale" format="float" type="dimen">0.6</item>
+    <item name="config_lowResTaskSnapshotScale" format="float" type="dimen">0.3</item>
+    <bool name="config_use16BitTaskSnapshotPixelFormat">true</bool>
 </resources>
