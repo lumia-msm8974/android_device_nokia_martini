@@ -1,0 +1,10 @@
+# FM radio (WCN3680 iris core): the FM JNI starts vendor.fm with ctl.start
+# when it powers the radio up and stops it when it powers it down
+# (SOC_PATCH_DL_SCRPT of vendor/qcom/opensource/libfmjni). Root: the
+# transport switch is a 0644 module parameter.
+service vendor.fm /vendor/bin/init.martini.fm.sh
+    class late_start
+    user root
+    group system
+    disabled
+    oneshot

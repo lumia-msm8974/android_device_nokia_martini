@@ -10,6 +10,7 @@
 # Init scripts
 /(vendor|system/vendor)/bin/init\.martini\.wifi\.sh      u:object_r:qti_init_shell_exec:s0
 /(vendor|system/vendor)/bin/init\.martini\.power\.sh     u:object_r:qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/init\.martini\.fm\.sh        u:object_r:qti_init_shell_exec:s0
 
 # Bring-up boot log
 /(vendor|system/vendor)/bin/init\.martini\.bootlog\.sh   u:object_r:martini_bootlog_exec:s0

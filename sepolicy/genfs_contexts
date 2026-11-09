@@ -28,5 +28,11 @@ genfscon sysfs /module/pil_q6v5_mss/parameters u:object_r:sysfs_pil_mss:s0
 # (1520 denial: bluetooth_loader reading plain sysfs smd_channel_ready)
 genfscon sysfs /devices/fb000000.qcom,wcnss-wlan/smd_channel_ready u:object_r:sysfs_wcnss_smd:s0
 
+# FM radio: the iris SMD transport switch, written by init.martini.fm.sh
+# (qti_init_shell, which sepolicy-legacy allows on sysfs_fm). sepolicy-legacy
+# labels it in file_contexts, but nothing relabels /sys/module: ueventd only
+# restores /sys/class, /sys/block and /sys/devices at cold boot.
+genfscon sysfs /module/radio_iris_transport/parameters/fmsmd_set u:object_r:sysfs_fm:s0
+
 # zram swap tuning in init.martini.rc (written by vendor_init)
 genfscon proc /sys/vm/swappiness u:object_r:proc_swappiness:s0

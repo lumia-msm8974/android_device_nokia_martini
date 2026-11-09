@@ -776,6 +776,32 @@
         <ctl name="Voip_Tx Mixer SLIM_0_TX_Voip" value="1" />
     </path>
 
+    <!-- FM radio: the WCN3680 FM core sends its audio to the LPASS internal
+         FM port (AFE INT_FM_TX, msm-dai-q6-dev.12293); the headset cable is
+         the antenna.
+         FMRadio records it like a microphone (AUDIO_SOURCE_FM_TUNER: usecase
+         fm-virtual-record on MultiMedia2, device capture-fm) and plays it
+         back through the normal output paths, so speaker and headphones both
+         work. capture-fm has nothing to set in the codec. -->
+    <path name="fm-virtual-record capture-fm">
+        <ctl name="MultiMedia2 Mixer INTERNAL_FM_TX" value="1" />
+    </path>
+
+    <path name="capture-fm">
+    </path>
+
+    <!-- Hostless loopback of the audio HAL (audio_extn/fm.c, "handle_fm"
+         parameter, used by the CAF FM app, not by FMRadio): the HAL opens
+         the SLIMBUS_0 hostless playback and the INT_FM hostless capture
+         (PCM 5 and 6) and the ADSP loops INT_FM_TX into SLIMBUS_0_RX; the
+         gain is "Internal FM RX Volume". Headphones only: the SEC_MI2S_RX
+         hostless switch (SECMI2S_DL_HL) exists only for the Oppo N3 in the
+         kernel, so there is no "play-fm sec-mi2s" for the loudspeaker. -->
+    <path name="play-fm">
+        <ctl name="SLIMBUS_0_RX Port Mixer INTERNAL_FM_TX" value="1" />
+        <ctl name="SLIMBUS_DL_HL Switch" value="1" />
+    </path>
+
     <!-- Analog output devices -->
     <path name="ear">
         <ctl name="RX1 MIX1 INP1" value="RX1" />

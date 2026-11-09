@@ -120,6 +120,19 @@ PRODUCT_PACKAGES += \
     android.hardware.drm@1.0-service \
     android.hardware.drm@1.3-service.clearkey
 
+# FM radio. The 930 has it on Windows Phone: the FM function of the WCNSS
+# (ACPI \_SB.RIVA.FMT0, QWCN\QCOM2150) with the Qualcomm FM transport
+# driver on the APPS_FM SMD channel and the FM Radio app (registry
+# FMRadio\OEM NotPresent = 0, RadioRegion 2: 87.5-108 MHz, 100 kHz steps).
+# Here: the iris driver of the martini kernel (/dev/radio0), the LineageOS
+# FMRadio app on the Qualcomm JNI (BOARD_HAVE_QCOM_FM), vendor.fm to open
+# the SMD transport, and the INTERNAL_FM_TX routes of mixer_paths.xml. The
+# headset cable is the antenna. Unverified on the phone.
+PRODUCT_PACKAGES += \
+    FMRadio \
+    init.martini.fm.rc \
+    init.martini.fm.sh
+
 # Gatekeeper
 PRODUCT_PACKAGES += \
     android.hardware.gatekeeper@1.0-service.software

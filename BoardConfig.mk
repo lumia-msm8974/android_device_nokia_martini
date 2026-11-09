@@ -83,6 +83,9 @@ AUDIO_FEATURE_ENABLED_COMPRESS_VOIP := false
 AUDIO_FEATURE_ENABLED_EXTN_FORMATS := true
 AUDIO_FEATURE_ENABLED_EXTN_POST_PROC := true
 AUDIO_FEATURE_ENABLED_FLUENCE := true
+# FM radio through the audio HAL (audio_extn/fm.c, "handle_fm"): hostless
+# loopback of the internal FM port in the ADSP
+AUDIO_FEATURE_ENABLED_FM_POWER_OPT := true
 AUDIO_FEATURE_ENABLED_HFP := true
 AUDIO_FEATURE_ENABLED_HWDEP_CAL := true
 AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
@@ -100,6 +103,11 @@ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(DEVICE_PATH)/bluetooth
 
 # Build
 BUILD_BROKEN_DUP_RULES := true
+
+# FM radio: the WCN3680 FM core (kernel radio-iris on the APPS_FM SMD
+# channel, see device.mk). Builds the Qualcomm FM JNI
+# (vendor/qcom/opensource/libfmjni) for packages/apps/FMRadio.
+BOARD_HAVE_QCOM_FM := true
 
 # Charger
 BOARD_HEALTHD_CUSTOM_CHARGER_RES := $(MSM8974_COMMON_PATH)/charger/images

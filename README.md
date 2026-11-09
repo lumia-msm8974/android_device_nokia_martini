@@ -143,7 +143,38 @@ It only changes the LineageOS and AOSP settings that LineageParts also
 uses, so it needs no permission, init or SELinux change here. `device.mk`
 adds it when the app is checked out.
 
-## Modem (on, unverified on a 930)
+## FM radio (unverified on a 930)
+
+The 930 has FM radio on Windows Phone, through the FM core of the WCN3680:
+the stock image enumerates it as a function of the WCNSS (ACPI
+`\_SB.RIVA.FMT0`, `QWCN\QCOM2150`), its Qualcomm transport driver talks
+to the Pronto firmware over the `APPS_FM` SMD channel, and the FM Radio
+app is not hidden (`FMRadio\OEM\NotPresent` 0, region 2: 87.5-108 MHz,
+100 kHz). Android uses the same channel:
+
+- kernel: `radio-iris` and `radio-iris-transport` (`/dev/radio0`, kernel
+  branch `martini-fm`); the `qcom,iris-fm` node of `msm8974.dtsi` is
+  already on;
+- `FMRadio` (packages/apps/FMRadio) on the Qualcomm JNI
+  (vendor/qcom/opensource/libfmjni, `BOARD_HAVE_QCOM_FM`), which starts
+  `vendor.fm` (`init.martini.fm.rc`, `init.martini.fm.sh`) to open the SMD
+  transport;
+- audio: the FM core feeds the LPASS internal FM port (`INT_FM_TX`).
+  FMRadio records it (`fm-virtual-record capture-fm`, MultiMedia2) and
+  plays it on the normal outputs, speaker included; the hostless `play-fm`
+  path of the audio HAL (`AUDIO_FEATURE_ENABLED_FM_POWER_OPT`) only reaches
+  the headphones;
+- the headset cable is the antenna: nothing selects another one (libfmjni
+  asks for the internal antenna only with
+  `vendor.hw.fm.internal_antenna=true`; no internal FM antenna is known on
+  the 930).
+
+Not done: the calibration that Windows runs (`fm_qsoc_patches` is not in
+the tree), and the search thresholds of the Windows registry
+(`Tuner\Audio\FmRadio`: SINR 3, SINR samples 10, interference 109/115,
+RMSSI first stage -112, CF0 15000), since libfmjni reads the values of
+`fm_srch_af_th.conf` from the wrong group.
+
 
 The kernel starts the modem as on the 1520: MSA self-auth, MBA at
 0x0d100000 and modem at 0x08000000 (their ELF addresses, inside the stock
@@ -280,6 +311,10 @@ To test on the phone:
   martini trees.
 - [TheMuppets](https://github.com/TheMuppets): `proprietary_vendor_oppo`
   (generic MSM8974 blobs).
+- LineageOS and the Code Aurora Forum: `packages/apps/FMRadio`,
+  `vendor/qcom/opensource/libfmjni` and `fm-commonsys`, whose FM start
+  sequence (`vendor.fm`, `vendor.hw.fm.*`, the CAF `init.qcom.fm.sh`)
+  `init.martini.fm.sh` follows; the radio-iris drivers of the kernel.
 - The Android Open Source Project: the Nexus 5 (hammerhead) power profile,
   the source of the CPU currents and placeholder values in
   `power_profile.xml`.
