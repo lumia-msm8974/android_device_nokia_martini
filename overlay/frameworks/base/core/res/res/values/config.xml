@@ -6,6 +6,15 @@
 -->
 <!-- Lumia 930 values that replace the Oppo ones of msm8974-common. -->
 <resources>
+    <!-- Device idle: no motion sensor yet (the 930 accelerometer is behind the
+         ADSP sensor core, not supported yet), so deep idle must not wait for
+         one. TODO: back to the default once the SSC sensors work. -->
+    <bool name="config_autoPowerModeUseMotionSensor">false</bool>
+
+    <!-- No wallpaper zoom: one less full-screen scale per frame on the
+         Adreno 330 -->
+    <item name="config_wallpaperMaxScale" format="float" type="dimen">1</item>
+
     <!-- No flip cover sensor -->
     <bool name="config_lidControlsSleep">false</bool>
 

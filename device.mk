@@ -184,6 +184,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.hardware.egl=adreno
 endif
 
+# Bring-up builds (userdebug/eng). TODO: remove for release builds.
+#  - no RescueParty: a crash loop of a system app during bring-up must not
+#    send the phone to the "factory reset?" recovery screen.
+ifneq ($(TARGET_BUILD_VARIANT),user)
+PRODUCT_SYSTEM_PROPERTIES += \
+    persist.sys.disable_rescue=true
+endif
+
 # GPS: the msm8974-common location HAL (gps.msm8974, built from source)
 # behind the LineageOS legacy GNSS service. It talks QMI LOC to the modem
 # through the libloc_api_v02 blob. See kit/gps/README.md.
