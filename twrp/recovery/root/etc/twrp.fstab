@@ -1,4 +1,4 @@
-# TWRP fstab for the Nokia Lumia 1520 (martini), installer partition layout
+# TWRP fstab for the Nokia Lumia 930 (martini), installer partition layout
 # (aboot, boot, recovery, misc, modem, cache, persist, persistent, fsc, fsg,
 # metadata, ssd, modemst1, modemst2, vendor, system, userdata).
 # <mount point>  <type>  <device>                                         <flags>
@@ -20,4 +20,4 @@
 /efsg            emmc    /dev/block/platform/msm_sdcc.1/by-name/fsg        flags=backup=1;subpartitionof=/efs1
 /efsc            emmc    /dev/block/platform/msm_sdcc.1/by-name/fsc        flags=backup=1;subpartitionof=/efs1
 
-/external_sd     auto    /dev/block/mmcblk1p1    /dev/block/mmcblk1        flags=removable;storage;wipeingui;display="MicroSD"
+# No microSD slot on the Lumia 930: internal storage only (/data/media)

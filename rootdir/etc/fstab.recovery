@@ -1,4 +1,4 @@
-# Nokia Lumia 1520 (martini) - recovery and OTA fstab.
+# Nokia Lumia 930 (martini) - recovery and OTA fstab.
 # Same planned Android partitions as fstab.martini, plus /system for the
 # recovery and the OTA scripts.
 

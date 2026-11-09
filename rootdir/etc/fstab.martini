@@ -1,7 +1,11 @@
-# Nokia Lumia 1520 (martini) - provisional fstab.
+# Nokia Lumia 930 (martini) - provisional fstab.
 # Android partitions do not exist on the stock Windows Phone GPT: they are
-# created inside the space of Data with the Lumia 950 XL layout (installer
-# partition.sh/provision.sh): aboot, boot, recovery, misc, modem, cache,
+# created inside the space of Data with the same layout as on the Lumia 1520
+# (installer partition.sh/provision.sh, martini profile still to be written;
+# TODO: check it against the 930 GPT, 32 GB eMMC). Every name must be
+# unique: a second "userdata" (as reported by the LineageOS 17.1 martini
+# port) makes by-name/userdata ambiguous. Partitions: aboot, boot,
+# recovery, misc, modem, cache,
 # persist, persistent, fsc, fsg, metadata, ssd, modemst1, modemst2, vendor,
 # system, userdata. modem is a FAT image with the remote processor firmware
 # (also shipped in /vendor/firmware from the vendor's local folder);
@@ -23,4 +27,4 @@
 # one compression stream per core (all four cores run since SMP)
 /dev/block/zram0                                    none            swap    defaults                                                        zramsize=536870912,max_comp_streams=4
 
-/devices/msm_sdcc.2/mmc_host*                       auto            auto    defaults                                                        voldmanaged=sdcard1:auto,encryptable=userdata
+# No microSD slot on the Lumia 930
