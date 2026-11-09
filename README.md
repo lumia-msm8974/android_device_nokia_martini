@@ -78,6 +78,18 @@ Adapted for the 930:
 - NFC: the legacy PN544 path is kept so the tree builds, but no EEPROM
   tuning is listed (the 1520 values belong to its antenna), so the NFC
   service does not initialise the chip.
+- thermal: `configs/thermal-engine-8974.conf` for the msm8974 blob, with
+  the passive/critical temperatures of the stock DSDT thermal zones where
+  they use a sensor the blob reads (TSENS, PM8941 die, PA_THERM): GPU
+  step-wise at 85 C, CPU at 83 C (tsens 2) and 95 C (tsens 0), shutdown at
+  105 C (90 C on tsens 2, 85 C on PA_THERM). Core set point 75 C as on
+  the OnePlus One, because Windows adds skin zones on a thermistor this
+  blob cannot read; no hotplug actions;
+- CPU bandwidth: `init.martini.power.sh` sets `cpubw_hwmon` on whatever
+  `qcom,cpubw.<N>` node the kernel creates (opt out with
+  `persist.vendor.martini.cpubw_hwmon=0`);
+- power profile: BV-5QW 2420 mAh, cpufreq steps of a speed bin 2 MSM8974
+  v2 (2150400 kHz top) with the Nexus 5 currents; unmeasured.
 
 Layout: `BoardConfig.mk`, `device.mk`, `lineage_martini.mk`; `init/`
 (`libinit_martini`), `liblight/`, `sensors/` (`sensors.martini`), `nfc/`
@@ -163,7 +175,10 @@ To extract from the 930 Windows firmware (FFU or the phone's MainOS):
 To test on the phone:
 
 - [ ] lk1st load addresses and boot of `boot.img`; SMP through the parking
-      mailboxes; cpufreq range;
+      mailboxes; cpufreq range and speed bin (top step 1958400, 2150400 or
+      2265600 kHz, `power_profile.xml`);
+- [ ] thermal-engine: sections loaded, GPU device found, `cpubw_hwmon`
+      active, temperatures under load;
 - [ ] MDSS panel and `lcd-backlight` range; doze;
 - [ ] touch, double tap to wake, keys and key backlight (which KPDBL row);
 - [ ] NFC (PN544 with the 930 EEPROM settings, SIM card emulation);
@@ -181,6 +196,9 @@ To test on the phone:
   martini trees.
 - [TheMuppets](https://github.com/TheMuppets): `proprietary_vendor_oppo`
   (generic MSM8974 blobs).
+- The Android Open Source Project: the Nexus 5 (hammerhead) power profile,
+  the source of the CPU currents and placeholder values in
+  `power_profile.xml`.
 - Markynose (Mark Buchok), [lumia930-linux](https://github.com/Markynose/lumia930-linux):
   the 930 hardware map from its DSDT/SSDT (touch, light/proximity sensor,
   keys, battery), boot chain and SMP through the UEFI parking mailboxes.
