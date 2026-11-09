@@ -4,8 +4,9 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// Lights HAL: LCD backlight and the capacitive key backlight (PM8941
-// KPDBL). The Lumia 1520 has no notification LED.
+// Lights HAL: display backlight only (AMOLED panel brightness through the
+// MDSS lcd-backlight device). The Lumia 930 has no key backlight and no
+// notification LED.
 cc_library_shared {
     name: "lights.msm8974",
     relative_install_path: "hw",

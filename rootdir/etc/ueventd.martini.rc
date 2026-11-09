@@ -186,6 +186,3 @@
 
 # NFC (PN544, pn544-martini)
 /dev/pn544                0660   nfc        nfc
-
-# Capacitive key backlight (PM8941 KPDBL rows), written by the lights HAL
-/sys/devices/leds-qpnp-*/leds/kpdbl-pwm-*   brightness   0664 system system
