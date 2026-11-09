@@ -104,8 +104,13 @@ BOARD_HEALTHD_CUSTOM_CHARGER_RES := $(MSM8974_COMMON_PATH)/charger/images
 WITH_DEXPREOPT_DEBUG_INFO := false
 
 # Display
-# 5" 1080x1920 AMOLED, about 441 ppi: 480 (xxhdpi) is the usual Android
-# density for 5" 1080p phones (the 6" 1520 uses 400).
+# 5" 1080x1920 AMOLED. The Windows touch settings give 62.00 x 115.00 mm,
+# that is 442 x 424 dpi (441 ppi for the nominal 5.0" diagonal). Use 480
+# (xxhdpi) rather than 440: it is the bucket that 5" 1080p phones of the
+# same density use in LineageOS (Nexus 5 hammerhead, 445 ppi; OnePlus X,
+# 441 ppi AMOLED; Galaxy S4), so apps get xxhdpi assets without scaling
+# and the layout matches those devices; 440 would only gain about 9%
+# space. The 6" 1520 uses 400.
 TARGET_SCREEN_DENSITY := 480
 
 # Encryption: software only. Hardware FDE (cryptfshw) needs a QSEE app
