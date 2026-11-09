@@ -1,5 +1,8 @@
 # PMIC power supplies (qpnp-bms: fuel gauge, qpnp-charger: battery/dc,
-# msm_otg: usb), read by healthd/charger and the health HAL
+# msm_otg: usb), read by healthd/charger and the health HAL. On the 930 the
+# Qi wireless charger should feed the PM8941 DC input ("dc" supply).
+# TODO: the -10/-14 suffixes are the 1520 platform device numbers; check
+# them on the 930 (ls /sys/devices | grep qpnp) and the Qi path.
 genfscon sysfs /devices/qpnp-bms-10/power_supply        u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/qpnp-charger-14/power_supply    u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/msm_otg/power_supply            u:object_r:sysfs_batteryinfo:s0

@@ -198,7 +198,9 @@ PRODUCT_COPY_FILES += \
     $(MSM8974_COMMON_PATH)/gps/izat.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/izat.conf \
     $(MSM8974_COMMON_PATH)/gps/sap.conf:$(TARGET_COPY_OUT_SYSTEM)/etc/sap.conf
 
-# Healthd
+# Healthd. Battery BV-5QW, 2420 mAh (2500 mAh in some sources), Qi
+# wireless charging through the PM8941 DC input. TODO: battery profile and
+# charging limits are in the kernel (qpnp-bms/qpnp-charger), not here.
 PRODUCT_PACKAGES += \
     android.hardware.health@2.1-impl \
     android.hardware.health@2.1-impl.recovery \
@@ -359,7 +361,8 @@ PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service.basic
 
 # Vibrator: PM8941 vibration motor (timed_output/vibrator, kernel
-# qcom,vibrator@c000), driven by vibrator.default through the 1.0 HAL.
+# qcom,vibrator@c000; on the 930 its enable line is GPIO8, set up by the
+# kernel DT), driven by vibrator.default through the 1.0 HAL.
 # The HAL must only be declared while that device exists: a failing
 # vibrator HAL blocks system_server in VibratorService.vibratorInit.
 PRODUCT_PACKAGES += \
