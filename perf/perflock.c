@@ -49,7 +49,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <cutils/properties.h>
+#include <sys/system_properties.h>
 #include <log/log.h>
 
 #define NR_CPUS 4
@@ -170,11 +170,11 @@ static void load_frequencies(void) {
         write_cpufreq(cpu, "scaling_max_freq", cpu_max_hw);
     }
     for (int t = 0; t < NR_TUNABLES; t++) {
-        char value[PROPERTY_VALUE_MAX];
+        char value[PROP_VALUE_MAX];
         char* end = NULL;
         long base;
 
-        if (property_get(tunable_prop[t], value, "") <= 0) continue;
+        if (__system_property_get(tunable_prop[t], value) <= 0) continue;
         base = strtol(value, &end, 10);
         if (end == value || *end || base < 0) continue;
         base_tunable[t] = (int)base;
