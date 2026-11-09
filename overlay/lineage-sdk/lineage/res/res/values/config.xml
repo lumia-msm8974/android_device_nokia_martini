@@ -5,12 +5,16 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <!-- Hardware keys: camera (32) and volume rocker (64). Navigation is
-         on screen. TODO: add back (2), home (1) and app switch (16) if the
-         touch controller turns out to report capacitive keys. -->
-    <integer name="config_deviceHardwareKeys">96</integer>
+    <!-- Capacitive keys: back (2), home (1), app switch (16); camera (32)
+         and volume rocker (64) on the PM8941 GPIOs -->
+    <integer name="config_deviceHardwareKeys">115</integer>
 
-    <!-- No key backlight -->
+    <!-- Key backlight: three LEDs under the keys (Windows touch settings:
+         ButtonBacklights LedCount 3), driven on the 1520 by the PM8941 KPDBL
+         rows. The martini kernel keeps KPDBL off until the 930 ACPI tables
+         confirm the rows, so no brightness control for now.
+         TODO: set to 2 (variable) together with the kernel KPDBL node; the
+         lights HAL already drives kpdbl-pwm-1..4 when they exist. -->
     <integer name="config_deviceSupportsButtonBrightnessControl">0</integer>
 
     <!-- No Oppo ConfigPanel / touchscreen gesture key handlers -->

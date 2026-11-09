@@ -160,9 +160,10 @@ BOARD_ROOT_EXTRA_FOLDERS := firmware persist
 # Power
 TARGET_USES_INTERACTION_BOOST := true
 # Double tap to wake: the power HAL writes the Synaptics driver's switch.
-# The 930 touch controller sits on the same bus and address as the 1520 one
-# (BLSP1 I2C2, 0x4b, IRQ GPIO61). TODO: unverified on the phone (bus number
-# from the martini kernel DT, wakeup gesture support of the touch firmware).
+# Same controller (BLSP1 QUP2, cell-index 2, so i2c-2) and address (0x4b) as
+# on the 1520; the Windows touch settings of the 930 enable the wakeup
+# gesture (WakeupGestureSupported/EnableWakeupGesture = 1). Unverified on
+# the phone.
 TARGET_TAP_TO_WAKE_NODE := "/sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture"
 
 # Properties

@@ -23,7 +23,7 @@ on early-init
 
 on boot
     # Double tap to wake switch, written by the power HAL (user system).
-    # TODO: same path as on the 1520, unverified on the 930.
+    # Same path as on the 1520 (i2c-2, 0x4b); unverified on the 930.
     chown system system /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
     chmod 0660 /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
 

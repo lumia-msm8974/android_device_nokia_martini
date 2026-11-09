@@ -12,4 +12,5 @@ genfscon sysfs /devices/msm_otg/power_supply            u:object_r:sysfs_battery
 # APDS-9930 (BLSP1 I2C3 0x39; bus number unverified, see ueventd). TODO:
 # accelerometer, gyroscope and magnetometer once known.
 genfscon sysfs /devices/f9925000.i2c/i2c-4/4-0039       u:object_r:sysfs_sensors:s0
+genfscon sysfs /devices/f9924000.i2c/i2c-2/2-004b/0dbutton u:object_r:sysfs_touchpanel:s0
 genfscon sysfs /devices/f9924000.i2c/i2c-2/2-004b/wake_gesture u:object_r:sysfs_touchpanel:s0

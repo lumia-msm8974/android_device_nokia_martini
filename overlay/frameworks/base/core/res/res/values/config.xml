@@ -16,9 +16,10 @@
     <!-- No notification LED -->
     <bool name="config_intrusiveNotificationLed">false</bool>
 
-    <!-- On-screen navigation keys: the 930 has no capacitive keys known to
-         Android yet (see keylayout/synaptics_rmi4_i2c.kl). -->
-    <bool name="config_showNavigationBar">true</bool>
+    <!-- Capacitive keys (Back, Start, Search below the panel) by default;
+         enabling the navigation bar or gestures in LineageOS turns the keys
+         off through the key disabler. -->
+    <bool name="config_showNavigationBar">false</bool>
 
     <!-- Automatic brightness from the APDS-9930 ambient light sensor. The
          lux calibration of the kernel driver and the curve below come from

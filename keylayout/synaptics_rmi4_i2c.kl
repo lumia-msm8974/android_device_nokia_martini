@@ -1,16 +1,11 @@
-# Lumia 930 Synaptics RMI4 touchscreen (BLSP1 I2C2 0x4b).
-#
-# Navigation uses the on-screen bar (config_showNavigationBar, and
-# qemu.hw.mainkeys=0 in system.prop). The touchscreen functions listed in
-# the Windows DSDT so far are F01, F11 and F12, no F1A 0D buttons.
-# TODO: check on the phone whether the touch controller reports Back,
-# Start and Search keys (Synaptics F1A); the LineageOS 17.1 martini port of
-# 2314372037 maps them. The common msm8974 Synaptics driver keeps 8-bit key
-# codes, as on the 1520; if the keys exist, uncomment these lines and bring
-# back the key disabler of the bandit tree (touch/, 0dbutton attribute).
-# key 158   BACK        VIRTUAL
-# key 172   HOME        VIRTUAL
-# key 139   APP_SWITCH  VIRTUAL
+# Lumia 930 capacitive keys (Synaptics F1A 0D buttons): back, start (home),
+# search (app switch). The Windows touch settings of the 930 list the same
+# three buttons as the 1520 (Back, Start, Search, same FF button order), and
+# the kernel DT maps them as on the 1520. The touch driver keeps 8-bit key
+# codes, so search arrives as KEY_MENU (139). Unverified on the phone.
+key 158   BACK        VIRTUAL
+key 172   HOME        VIRTUAL
+key 139   APP_SWITCH  VIRTUAL
 
 # Double tap on the screen while it is off (touch firmware wakeup gesture)
 key 143   WAKEUP

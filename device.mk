@@ -260,10 +260,13 @@ PRODUCT_PACKAGES += \
     libtinyxml \
     libxml2
 
-# Touchscreen key layout (double tap to wake). Navigation is on screen:
-# no key disabler (see keylayout/synaptics_rmi4_i2c.kl).
+# Capacitive keys (Back, Start, Search: Synaptics F1A buttons, as on the
+# 1520) and the key disabler used when the navigation bar is turned on
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/keylayout/synaptics_rmi4_i2c.kl:$(TARGET_COPY_OUT_VENDOR)/usr/keylayout/synaptics_rmi4_i2c.kl
+
+PRODUCT_PACKAGES += \
+    vendor.lineage.touch@1.0-service.martini
 
 # Radio: the Windows modem firmware leaves the USIM DETECTED until the host
 # opens the provisioning session (ril/lumia-uim-bootstrap.c, shared with
