@@ -57,8 +57,12 @@ BOARD_KERNEL_IMAGE_NAME := zImage-dtb
 BOARD_KERNEL_SEPARATED_DT := false
 BOARD_KERNEL_PAGESIZE := 2048
 BOARD_KERNEL_CMDLINE := androidboot.hardware=martini androidboot.bootdevice=msm_sdcc.1 \
-    msm_tz_restricted=1 \
-    androidboot.selinux=permissive
+    msm_tz_restricted=1
+# SELinux is permissive from the command line during bring-up (see the
+# SELinux section below); MARTINI_SELINUX_ENFORCING=true leaves it out.
+ifneq ($(MARTINI_SELINUX_ENFORCING),true)
+BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
+endif
 # lk1st loads the kernel at 0x10008000, ramdisk at 0x14000000, tags at
 # 0x13e00000 (it ignores the header, these keep the image consistent);
 # the kernel runs with PHYS_OFFSET 0x10000000. Same values as the 1520:
@@ -196,11 +200,29 @@ TW_EXTRA_LANGUAGES := true
 TW_INCLUDE_CRYPTO := false
 endif
 
-# SELinux (permissive from the command line during bring-up)
+# SELinux
+# Bring-up builds are permissive from the kernel command line
+# (androidboot.selinux=permissive, honoured on userdebug/eng builds only).
+# MARTINI_SELINUX_ENFORCING=true from the environment (for example
+# MARTINI_SELINUX_ENFORCING=true m bacon) builds the same policy without it,
+# so the phone boots enforcing: the rules of sepolicy/ cover the martini
+# services and scripts and the denials collected on the 1520, but they have
+# never been tried on a 930. Collect the denials of a permissive boot first
+# (dmesg and logcat | grep avc), then try the enforcing boot image with
+# fastboot boot. The setting is also in the boot image header, so changing
+# it needs a new boot.img, not a new system.
 include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_SEPOLICY_DIRS += \
     $(MSM8974_COMMON_PATH)/sepolicy \
     $(DEVICE_PATH)/sepolicy
+# SwiftShader (software and mdss graphics modes) compiles shaders to
+# executable memory (1520 denials: execmem in surfaceflinger and
+# system_server). system/sepolicy reads the PRODUCT_ variable for
+# system_server; surfaceflinger is in sepolicy-swiftshader/.
+ifneq ($(filter software mdss,$(TARGET_MARTINI_GRAPHICS)),)
+PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER := true
+BOARD_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy-swiftshader
+endif
 
 # Shims
 TARGET_LD_SHIM_LIBS := \

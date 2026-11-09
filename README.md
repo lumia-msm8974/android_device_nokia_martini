@@ -174,8 +174,8 @@ Kill switch, from the lightest to the strongest:
   with `pil_q6v5_mss.boot_enabled=0` added to its command line
   (`fastboot boot`), then set the property from that boot.
 
-`androidboot.selinux=permissive` is still set; the gate parameters carry
-their own label (`sysfs_pil_mss`) for init.
+The gate parameters carry their own label (`sysfs_pil_mss`) for
+`vendor_init`, which runs the `write` commands of `/vendor/etc/init`.
 
 ## Bring-up settings (turn off for releases)
 
@@ -188,6 +188,43 @@ On non-user builds `device.mk` sets:
   `/data/vendor/bootlog/` every 5 s for 30 minutes of each boot (previous
   boot in `*.prev.txt`), since the phone has no pstore or last_kmsg. The
   periodic `sync` costs eMMC writes: it must be off in release builds.
+
+## SELinux
+
+Builds are permissive from the kernel command line
+(`androidboot.selinux=permissive`, `BoardConfig.mk`) until the policy has
+been checked on a 930. `MARTINI_SELINUX_ENFORCING=true m bacon` builds the
+same tree without it, so the phone starts enforcing; only the boot image
+changes.
+
+`sepolicy/` holds what the martini pieces need on top of
+`device/qcom/sepolicy-legacy` and `device/oppo/msm8974-common/sepolicy`,
+written from a review of the init scripts and services and from the
+denials of the permissive 1520 boots (same stack):
+
+- `lumia-uim-bootstrap` gets its own domain: without one init would not
+  start it in enforcing mode (on the 1520 it ran as `init`);
+- `vendor_init`: `/dev/wcnss_wlan` (Pronto firmware load), swappiness
+  (`proc_swappiness`), the modem gate; the `persistent` (FRP) node moved
+  to `ueventd.martini.rc`, as `chown` in an init script only changes the
+  by-name link;
+- `init.martini.wifi.sh` (`qti_init_shell`): the cfg file in
+  `/data/vendor/wifi` and the bind mounts over `/vendor/firmware`;
+- gralloc on `/dev/graphics/fb0`; `hci_qcomm_init` on the WCNSS
+  `smd_channel_ready` node;
+- `file_contexts` regexes for sysfs nodes whose path holds a device or bus
+  number known only on the phone (battery and charger supplies, RTC, light
+  sensor, touch attributes) and for the MDSS `lcd-backlight` LED, which
+  would otherwise be plain `sysfs` and not writable by the light HAL;
+- `sepolicy-swiftshader/` and `PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER`
+  only in the `software` and `mdss` graphics modes (shader JIT).
+
+Checked offline: the vendor policy and the full policy compile with the
+SDK 30 tools of the build (`checkpolicy`, `secilc`), with no neverallow
+failure beyond those the userdebug tree already has, and `checkfc` accepts
+`file_contexts`. Never booted: collect `dmesg` and `logcat | grep avc`
+from a permissive boot before trying `fastboot boot` with an enforcing
+boot image. `init.martini.bootlog.sh` stays permissive on userdebug builds.
 
 ## TODO
 

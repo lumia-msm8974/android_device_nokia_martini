@@ -1,0 +1,5 @@
+# gralloc.msm8974 (and gralloc.default in the software graphics mode) opens
+# the framebuffer device /dev/graphics/fb0 to post the frames (1520 denial:
+# HwBinder threads of the allocator service on fb0)
+allow hal_graphics_allocator_default graphics_device:dir search;
+allow hal_graphics_allocator_default graphics_device:chr_file rw_file_perms;

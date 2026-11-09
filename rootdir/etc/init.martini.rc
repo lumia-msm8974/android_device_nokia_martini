@@ -16,11 +16,8 @@ on late-fs
     start gralloc-2-0
     mount_all /vendor/etc/fstab.martini --late
 
-on post-fs-data
-    # Factory reset protection: PersistentDataBlockService (system_server)
-    # opens ro.frp.pst; the block node is root-only by default
-    chown system system /dev/block/platform/msm_sdcc.1/by-name/persistent
-    chmod 0660 /dev/block/platform/msm_sdcc.1/by-name/persistent
+# Factory reset protection: the persistent partition node is owned by system
+# in ueventd.martini.rc
 
 on boot
     # zram swap (fstab.martini), LZ4 is cheaper than LZO on one Krait core
