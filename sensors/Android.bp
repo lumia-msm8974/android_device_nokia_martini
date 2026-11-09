@@ -5,7 +5,8 @@
 //
 
 // Sensors HAL on the martini-* input devices of the kernel drivers
-// (accelerometer, magnetometer, gyroscope, light, proximity). Loaded by
+// (accelerometer, magnetometer, gyroscope, light, proximity; for now only
+// the APDS-9930 light/proximity driver exists). Loaded by
 // android.hardware.sensors@1.0-impl: ro.hardware=martini makes it win over
 // the Qualcomm ADSP HAL (sensors.msm8974).
 cc_library_shared {

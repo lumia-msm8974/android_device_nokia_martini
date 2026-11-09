@@ -162,16 +162,13 @@
 # sensors: input devices of the martini sensor drivers, written by
 # sensors.martini (system). The trailing '*' is a prefix match on the device
 # path (/sys/devices/.../input/inputN).
-# APDS-9930 light/proximity (i2c-4 0x39), L3GD20 gyroscope (i2c-4 0x68)
+# APDS-9930 light/proximity on BLSP1 I2C3 (f9925000) at 0x39, from the 930
+# SSDT (QPDS_APS). Bus number 4 as in the 1520 DT (cell-index).
+# TODO: unverified, check the bus number of the martini kernel DT.
 /sys/devices/f9925000.i2c/i2c-4/4-0039/input/input* enable      0660 system system
 /sys/devices/f9925000.i2c/i2c-4/4-0039/input/input* poll_delay  0660 system system
-/sys/devices/f9925000.i2c/i2c-4/4-0068/input/input* enable      0660 system system
-/sys/devices/f9925000.i2c/i2c-4/4-0068/input/input* poll_delay  0660 system system
-# LIS2HH12 accelerometer (i2c-5 0x1e), HSCDTD008A magnetometer (i2c-5 0x0f)
-/sys/devices/f9968000.i2c/i2c-5/5-001e/input/input* enable      0660 system system
-/sys/devices/f9968000.i2c/i2c-5/5-001e/input/input* poll_delay  0660 system system
-/sys/devices/f9968000.i2c/i2c-5/5-000f/input/input* enable      0660 system system
-/sys/devices/f9968000.i2c/i2c-5/5-000f/input/input* poll_delay  0660 system system
+# TODO: accelerometer, gyroscope and magnetometer of the 930 (chips, buses
+# and addresses unknown: read them from the DSDT/SSDT of the phone).
 
 # wlan
 /dev/wcnss_wlan           0660   system     system

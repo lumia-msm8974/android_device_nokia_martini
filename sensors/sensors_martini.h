@@ -5,17 +5,27 @@
  */
 
 /*
- * Lumia 1520 (martini) sensors: everything that depends on the kernel
+ * Lumia 930 (martini) sensors: everything that depends on the kernel
  * drivers or on how the chips are mounted is in this file.
  *
  * Kernel interface (one input device per sensor, polled by the driver):
- *   martini-accel  EV_ABS ABS_X/Y/Z  raw counts, chip axes   (LIS2HH12)
- *   martini-gyro   EV_ABS ABS_X/Y/Z  raw counts, chip axes   (L3GD20)
- *   martini-mag    EV_ABS ABS_X/Y/Z  raw counts, chip axes   (HSCDTD008A)
- *   martini-light  EV_ABS ABS_MISC   lux                     (APDS-9930)
- *   martini-prox   EV_ABS ABS_DISTANCE 0 near, 5 far (cm)    (APDS-9930)
+ *   martini-accel EV_ABS ABS_X/Y/Z  raw counts, chip axes   (chip unknown)
+ *   martini-gyro  EV_ABS ABS_X/Y/Z  raw counts, chip axes   (chip unknown)
+ *   martini-mag   EV_ABS ABS_X/Y/Z  raw counts, chip axes   (chip unknown)
+ *   martini-light EV_ABS ABS_MISC   lux                     (APDS-9930)
+ *   martini-prox  EV_ABS ABS_DISTANCE 0 near, 5 far (cm)    (APDS-9930)
  * Each one has "enable" (0/1) and "poll_delay" (ms) in
  * /sys/class/input/inputN/.
+ *
+ * The APDS-9930 sits on BLSP1 I2C3 at 0x39 (IRQ GPIO74), as on the 1520:
+ * the 1520 driver (apds9930_bandit.c, input devices "bandit-light" and
+ * "bandit-prox") can be reused unchanged, so both names are accepted.
+ *
+ * TODO: identify the accelerometer, gyroscope and magnetometer of the 930
+ * (DSDT/SSDT of the phone: device, bus, address, mounting matrix) and write
+ * or port their kernel drivers. Until then no martini-accel/gyro/mag input
+ * device exists and the HAL lists only light and proximity. The 3-axis
+ * values below are placeholders taken from the 1520 chips.
  */
 
 #ifndef SENSORS_MARTINI_H
@@ -23,27 +33,39 @@
 
 #include <math.h>
 
-#define MARTINI_GRAVITY          9.80665f    /* m/s^2 per g */
-#define MARTINI_DEG_TO_RAD       ((float)(M_PI / 180.0))
+#define MARTINI_GRAVITY         9.80665f    /* m/s^2 per g */
+#define MARTINI_DEG_TO_RAD      ((float)(M_PI / 180.0))
+
+/* Name of the APDS-9930 input devices of the 1520 driver */
+#define LIGHT_ALT_INPUT_NAME    "bandit-light"
+#define PROX_ALT_INPUT_NAME     "bandit-prox"
+
+/* Chip names reported to the framework. TODO: real chips of the 930. */
+#define ACCEL_NAME              "Accelerometer"
+#define ACCEL_VENDOR            "Unknown"
+#define GYRO_NAME               "Gyroscope"
+#define GYRO_VENDOR             "Unknown"
+#define MAG_NAME                "Magnetometer"
+#define MAG_VENDOR              "Unknown"
 
 /*
  * Scales: SI unit per raw LSB, as documented at the top of each kernel
  * driver. Drop the final values of the drivers in here.
  */
 
-/* LIS2HH12, FS = +-2 g: 0.061 mg/LSB = 5.98206e-4 m/s^2 */
+/* Placeholder (1520 LIS2HH12, FS = +-2 g: 0.061 mg/LSB). TODO */
 #define ACCEL_MG_PER_LSB        0.061f
 #define ACCEL_SCALE             (ACCEL_MG_PER_LSB / 1000.0f * MARTINI_GRAVITY)
 #define ACCEL_RANGE             (2.0f * MARTINI_GRAVITY)
 #define ACCEL_RESOLUTION        ACCEL_SCALE
 
-/* L3GD20, FS = 2000 dps: 70 mdps/LSB = 1.221730e-3 rad/s */
+/* Placeholder (1520 L3GD20, FS = 2000 dps: 70 mdps/LSB). TODO */
 #define GYRO_MDPS_PER_LSB       70.0f
 #define GYRO_SCALE              (GYRO_MDPS_PER_LSB / 1000.0f * MARTINI_DEG_TO_RAD)
 #define GYRO_RANGE              (2000.0f * MARTINI_DEG_TO_RAD)
 #define GYRO_RESOLUTION         GYRO_SCALE
 
-/* HSCDTD008A: 0.15 uT/LSB, +-2400 uT (provisional: driver not written yet) */
+/* Placeholder (1520 HSCDTD008A: 0.15 uT/LSB, +-2400 uT). TODO */
 #define MAG_UT_PER_LSB          0.15f
 #define MAG_SCALE               MAG_UT_PER_LSB
 #define MAG_RANGE               2400.0f
@@ -61,7 +83,7 @@
 
 /*
  * Current draw in mA (datasheet typical values, active mode). Only used by
- * the framework for battery accounting.
+ * the framework for battery accounting. 3-axis values: 1520 placeholders.
  */
 #define ACCEL_POWER_MA          0.18f
 #define GYRO_POWER_MA           6.1f
@@ -80,13 +102,13 @@
  * (light, proximity) advertise minDelay 0; their limits only bound the rate
  * at which the driver polls the chip.
  */
-#define ACCEL_DELAY_MIN_MS      3       /* driver: [3, 1000], ODR up to 400 Hz */
+#define ACCEL_DELAY_MIN_MS      3       /* placeholder, TODO */
 #define ACCEL_DELAY_MAX_MS      1000
 #define ACCEL_MIN_DELAY_US      3334
-#define GYRO_DELAY_MIN_MS       2       /* driver: [2, 1000], ODR up to 760 Hz */
+#define GYRO_DELAY_MIN_MS       3       /* placeholder, TODO */
 #define GYRO_DELAY_MAX_MS       1000
 #define GYRO_MIN_DELAY_US       3334
-#define MAG_DELAY_MIN_MS        20      /* provisional: driver not written yet */
+#define MAG_DELAY_MIN_MS        20      /* placeholder, TODO */
 #define MAG_DELAY_MAX_MS        1000
 #define MAG_MIN_DELAY_US        20000
 #define LIGHT_DELAY_MIN_MS      110     /* driver: one chip cycle, ~107 ms */
@@ -106,34 +128,28 @@
 
 /*
  * Mounting matrices: Android device vector = M * chip vector, row major.
- * Keep them here so they can be flipped after testing on the phone.
- *
- * Gyroscope and magnetometer: the ACPI matrices of the Windows Phone DSDT.
- *
- * Accelerometer: the ACPI matrix is [0 1 0; 1 0 0; 0 0 1], which has
- * determinant -1 (a mirror, impossible for a chip soldered on a board).
- * Windows reports gravity (face up: z = -1 g) where Android reports the
- * reaction to it (face up: z = +9.81), so the Android matrix is the ACPI one
- * negated: [0 -1 0; -1 0 0; 0 0 -1], a proper rotation and the same as the
- * other two chips. Verify on the phone: flat face up must read about
- * (0, 0, +9.8); standing upright (portrait) about (0, +9.8, 0).
+ * TODO: take them from the ACPI matrices of the 930 DSDT once the chips are
+ * known (on the 1520 the accelerometer matrix had to be negated: Windows
+ * reports gravity, Android the reaction to it). Identity until then.
+ * Verify on the phone: flat face up must read about (0, 0, +9.8);
+ * standing upright (portrait) about (0, +9.8, 0).
  */
 #define ACCEL_MATRIX { \
-     0, -1,  0, \
-    -1,  0,  0, \
-     0,  0, -1, \
+     1,  0,  0, \
+     0,  1,  0, \
+     0,  0,  1, \
 }
 
 #define GYRO_MATRIX { \
-     0, -1,  0, \
-    -1,  0,  0, \
-     0,  0, -1, \
+     1,  0,  0, \
+     0,  1,  0, \
+     0,  0,  1, \
 }
 
 #define MAG_MATRIX { \
-     0, -1,  0, \
-    -1,  0,  0, \
-     0,  0, -1, \
+     1,  0,  0, \
+     0,  1,  0, \
+     0,  0,  1, \
 }
 
 #endif /* SENSORS_MARTINI_H */

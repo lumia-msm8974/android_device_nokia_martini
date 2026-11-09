@@ -5,12 +5,13 @@
  */
 
 /*
- * Sensors HAL for the Lumia 1520 (martini).
+ * Sensors HAL for the Lumia 930 (martini), from the Lumia 1520 (bandit) one.
  *
  * The kernel drivers expose one polled input device per sensor (see
  * sensors_martini.h). At load time the HAL scans /dev/input/event* and keeps
- * open the nodes whose EVIOCGNAME is one of the martini-* names; sensors whose
- * device is missing are not listed. activate/batch write "enable" and
+ * open the nodes whose EVIOCGNAME is one of the martini-* names (or the
+ * bandit-* name of a 1520 driver reused unchanged by the martini kernel);
+ * sensors whose device is missing are not listed. activate/batch write "enable" and
  * "poll_delay" in the sysfs directory of the input device; poll() waits with
  * poll(2) on the event nodes and on a wake pipe (flush, activation), turns
  * raw counts into SI units, rotates them into the Android device frame and
@@ -74,6 +75,7 @@ enum {
 
 struct sensor_desc {
     const char *input_name;
+    const char *alt_input_name; /* optional second name, may be NULL */
     int naxes;              /* 3 (x, y, z) or 1 */
     int codes[3];           /* EV_ABS codes of the axes */
     float scale;            /* SI unit per raw LSB */
@@ -98,8 +100,8 @@ static const struct sensor_desc g_desc[ID_COUNT] = {
         .delay_min_ms = ACCEL_DELAY_MIN_MS,
         .delay_max_ms = ACCEL_DELAY_MAX_MS,
         .info = {
-            .name = "LIS2HH12 Accelerometer",
-            .vendor = "STMicroelectronics",
+            .name = ACCEL_NAME,
+            .vendor = ACCEL_VENDOR,
             .version = 1,
             .handle = ID_TO_HANDLE(ID_ACCEL),
             .type = SENSOR_TYPE_ACCELEROMETER,
@@ -124,8 +126,8 @@ static const struct sensor_desc g_desc[ID_COUNT] = {
         .delay_min_ms = MAG_DELAY_MIN_MS,
         .delay_max_ms = MAG_DELAY_MAX_MS,
         .info = {
-            .name = "HSCDTD008A Magnetometer",
-            .vendor = "Alps",
+            .name = MAG_NAME,
+            .vendor = MAG_VENDOR,
             .version = 1,
             .handle = ID_TO_HANDLE(ID_MAG),
             .type = SENSOR_TYPE_MAGNETIC_FIELD,
@@ -149,8 +151,8 @@ static const struct sensor_desc g_desc[ID_COUNT] = {
         .delay_min_ms = GYRO_DELAY_MIN_MS,
         .delay_max_ms = GYRO_DELAY_MAX_MS,
         .info = {
-            .name = "L3GD20 Gyroscope",
-            .vendor = "STMicroelectronics",
+            .name = GYRO_NAME,
+            .vendor = GYRO_VENDOR,
             .version = 1,
             .handle = ID_TO_HANDLE(ID_GYRO),
             .type = SENSOR_TYPE_GYROSCOPE,
@@ -166,6 +168,7 @@ static const struct sensor_desc g_desc[ID_COUNT] = {
     },
     [ID_LIGHT] = {
         .input_name = "martini-light",
+        .alt_input_name = LIGHT_ALT_INPUT_NAME,
         .naxes = 1,
         .codes = { ABS_MISC },
         .scale = LIGHT_SCALE,
@@ -191,6 +194,7 @@ static const struct sensor_desc g_desc[ID_COUNT] = {
     },
     [ID_PROX] = {
         .input_name = "martini-prox",
+        .alt_input_name = PROX_ALT_INPUT_NAME,
         .naxes = 1,
         .codes = { ABS_DISTANCE },
         .scale = PROX_SCALE,
@@ -341,7 +345,10 @@ static void probe_inputs(void)
         }
 
         for (id = 0; id < ID_COUNT; id++) {
-            if (g_input[id].fd < 0 && strcmp(name, g_desc[id].input_name) == 0)
+            if (g_input[id].fd < 0 &&
+                (strcmp(name, g_desc[id].input_name) == 0 ||
+                 (g_desc[id].alt_input_name &&
+                  strcmp(name, g_desc[id].alt_input_name) == 0)))
                 break;
         }
         if (id == ID_COUNT) {

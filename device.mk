@@ -331,6 +331,7 @@ PRODUCT_COPY_FILES += \
 
 # Sensors: sensors.martini on the kernel input drivers (sensors/), loaded in
 # passthrough mode by system_server (group input) through the 1.0 impl.
+# Only the APDS-9930 light/proximity sensor is known on the 930 so far.
 PRODUCT_PACKAGES += \
     android.hardware.sensors@1.0-impl \
     sensors.martini

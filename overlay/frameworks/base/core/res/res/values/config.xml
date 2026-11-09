@@ -20,8 +20,10 @@
          Android yet (see keylayout/synaptics_rmi4_i2c.kl). -->
     <bool name="config_showNavigationBar">true</bool>
 
-    <!-- Automatic brightness from the APDS-9930 ambient light sensor
-         (calibrated in the kernel driver against a reference phone). -->
+    <!-- Automatic brightness from the APDS-9930 ambient light sensor. The
+         lux calibration of the kernel driver and the curve below come from
+         the 1520 (LCD). TODO: recheck both on the 930 (different window
+         above the sensor, AMOLED panel). -->
     <bool name="config_automatic_brightness_available">true</bool>
 
     <!-- Ambient light thresholds (lux) between the backlight levels below -->
