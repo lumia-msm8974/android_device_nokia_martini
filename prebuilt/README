@@ -1,9 +1,12 @@
-zImage-dtb: Linux 3.4 kernel for the Nokia Lumia 930 with the martini device
-tree appended. Built, never booted (no 930 tried yet).
+zImage-dtb: Linux 3.4 kernel for the Nokia Lumia 930 with the martini
+simple-framebuffer device tree appended (msm8974-v2.2-martini-simplefb.dtb:
+screen on the framebuffer the UEFI leaves running, MDSS off). The ROM uses the
+MDSS device tree; the recovery keeps the simple-framebuffer one until the MDSS
+panel takeover has been seen working on a phone. Built, never booted.
 
 Source: https://github.com/lumia-msm8974/android_kernel_nokia_msm8974
-Branch: lineage-18.1-martini, commit 937437c0
+Branch: lineage-18.1-martini, commit ac5369ab
 Config: lineage_martini_defconfig
 Toolchain: arm-linux-androideabi-4.9 (LineageOS 18.1 prebuilts)
-Build: make ARCH=arm CROSS_COMPILE=arm-linux-androideabi- lineage_martini_defconfig zImage-dtb
-SHA-256: 7146e39988cdd8ca6c6af99e4396c79898494d79aa472a29412f00d54fd0d6d7
+Build: build-env/build-kernel.sh in the Lumia 930 project (zImage + msm8974-v2.2-martini-simplefb.dtb)
+SHA-256: 46a9bdd8177a82a1997281383e05b62176f380c60bfbf73cb7c6e87e1d29ebc9
