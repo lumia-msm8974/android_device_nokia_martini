@@ -34,6 +34,21 @@ on early-boot
     # vendor.qseecomd is not started: the Windows Phone TrustZone has no
     # Android QSEE apps and QSEECOM is off in the martini kernel.
 
+# Modem kill switch: persist.vendor.martini.modem=0 keeps the modem off from
+# the next boot ("setprop persist.vendor.martini.modem 0", reboot; "1" and a
+# reboot to turn it back on). The kernel refuses every start while
+# pil_q6v5_mss.boot_enabled is 0, and leaves a crashed modem off instead of
+# restarting it. early-boot runs after the persistent properties are loaded
+# and before rmt_storage (class core) and qmuxd (class main), the first
+# clients that start the modem; the property trigger covers a change at run
+# time. pil_q6v5_mss.boot_enabled=0 on the kernel command line does the same
+# for a boot image that cannot reach Android (see README.md).
+on early-boot && property:persist.vendor.martini.modem=0
+    write /sys/module/pil_q6v5_mss/parameters/boot_enabled 0
+
+on property:persist.vendor.martini.modem=0
+    write /sys/module/pil_q6v5_mss/parameters/boot_enabled 0
+
 on boot
     # Bluetooth
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type

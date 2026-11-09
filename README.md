@@ -143,6 +143,40 @@ It only changes the LineageOS and AOSP settings that LineageParts also
 uses, so it needs no permission, init or SELinux change here. `device.mk`
 adds it when the app is checked out.
 
+## Modem (on, unverified on a 930)
+
+The kernel starts the modem as on the 1520: MSA self-auth, MBA at
+0x0d100000 and modem at 0x08000000 (their ELF addresses, inside the stock
+UEFI "Subsystem Reserved 0" region), both SSD-encrypted with the 930's own
+key and decrypted by the TrustZone while PIL loads them. The radio stack is
+the 1520 one: `rmt_storage` on the EFS copies, `qmuxd`, `netmgrd`, the QMI
+RIL blob, `lumia-uim-bootstrap` once `qmuxd` runs. No explicit ordering is
+needed: the first QMI/SMD client blocks in the kernel until the modem is
+up. GPS needs the modem (QMI LOC).
+
+The kernel gate (`/sys/module/pil_q6v5_mss/parameters/`):
+
+- at most `max_attempts` (3) starts per boot, restarts after a crash
+  included; none at all after the PBL, the MBA or the TrustZone rejected an
+  image; `attempts` shows how many were made;
+- a modem that crashes when no start is left is shut down and stays off
+  until the next boot (no subsystem restart, so no kernel panic loop).
+
+Kill switch, from the lightest to the strongest:
+
+- in Android: `setprop persist.vendor.martini.modem 0` (as root), reboot.
+  `init.martini.qcom.rc` writes `boot_enabled=0` at early-boot, before
+  `rmt_storage` and `qmuxd`; back on with
+  `setprop persist.vendor.martini.modem 1` and a reboot;
+- at run time, for the current boot only:
+  `echo 0 > /sys/module/pil_q6v5_mss/parameters/boot_enabled`;
+- if Android does not get that far: boot (do not flash) the same boot.img
+  with `pil_q6v5_mss.boot_enabled=0` added to its command line
+  (`fastboot boot`), then set the property from that boot.
+
+`androidboot.selinux=permissive` is still set; the gate parameters carry
+their own label (`sysfs_pil_mss`) for init.
+
 ## Bring-up settings (turn off for releases)
 
 On non-user builds `device.mk` sets:

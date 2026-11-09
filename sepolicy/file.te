@@ -4,3 +4,7 @@ type sysfs_touchpanel, sysfs_type, fs_type;
 # Windows provisioning partition (DPP, FAT), mounted read-only on
 # /mnt/vendor/dpp: Wi-Fi and Bluetooth addresses for init.martini.wifi.sh
 type martini_dpp_file, fs_type, contextmount_type;
+
+# Modem start gate of the kernel (pil_q6v5_mss module parameters), written
+# by init for the persist.vendor.martini.modem kill switch
+type sysfs_pil_mss, sysfs_type, fs_type;

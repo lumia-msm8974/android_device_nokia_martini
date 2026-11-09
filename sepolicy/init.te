@@ -1,3 +1,6 @@
 # Sensor Core rollback (init.martini.ssc.rc): bind mount of hals-martini.conf
 # over /vendor/etc/sensors/hals.conf
 allow init vendor_configs_file:file mounton;
+
+# Modem kill switch (init.martini.qcom.rc): pil_q6v5_mss.boot_enabled
+allow init sysfs_pil_mss:file w_file_perms;
