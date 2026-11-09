@@ -183,3 +183,7 @@
 
 # NFC (PN544, pn544-bandit driver of the 1520). TODO: 930 NFC chip unknown
 /dev/pn544                0660   nfc        nfc
+
+# Capacitive key backlight (PM8941 KPDBL rows), written by the lights HAL.
+# The martini kernel keeps KPDBL off for now (no nodes until it is enabled).
+/sys/devices/leds-qpnp-*/leds/kpdbl-pwm-*   brightness   0664 system system

@@ -5,13 +5,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *
- * Lights HAL for the Nokia Lumia 930: display backlight only. The AMOLED
+ * Lights HAL for the Nokia Lumia 930: display and key backlight. The AMOLED
  * panel has no WLED: its brightness is a DCS command sent by the MDSS panel
  * driver, which exposes it as the lcd-backlight LED class device
- * (0..max_brightness, usually 255). There is no key backlight and no
- * notification LED.
+ * (0..max_brightness, usually 255). The three capacitive keys have
+ * backlight LEDs (Windows touch settings: LedCount 3), lit on the 1520 by
+ * the PM8941 KPDBL rows (kpdbl-pwm-1..4). The martini kernel keeps KPDBL
+ * off until the 930 ACPI tables confirm it, so the buttons light is only
+ * offered when those LED class devices exist. No notification LED.
  * TODO: check on the phone that the martini panel driver registers
- * lcd-backlight and which range it uses.
+ * lcd-backlight and which range it uses, and the KPDBL rows.
  * Derived from the CAF/LineageOS msm8974 liblight.
  */
 
@@ -33,6 +36,16 @@ static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static const char LCD_FILE[] = "/sys/class/leds/lcd-backlight/brightness";
 static const char LCD_MAX_FILE[] = "/sys/class/leds/lcd-backlight/max_brightness";
+
+/* Capacitive key backlight: the four PM8941 KPDBL rows, driven together */
+static const char *const BUTTON_FILES[] = {
+    "/sys/class/leds/kpdbl-pwm-1/brightness",
+    "/sys/class/leds/kpdbl-pwm-2/brightness",
+    "/sys/class/leds/kpdbl-pwm-3/brightness",
+    "/sys/class/leds/kpdbl-pwm-4/brightness",
+};
+
+#define NUM_BUTTON_FILES (sizeof(BUTTON_FILES) / sizeof(BUTTON_FILES[0]))
 
 static int read_int(const char *path, int def)
 {
@@ -99,6 +112,42 @@ static int set_light_backlight(struct light_device_t *dev,
     return err;
 }
 
+static int set_light_buttons(struct light_device_t *dev,
+                             const struct light_state_t *state)
+{
+    unsigned int i;
+    int err = 0;
+
+    if (!dev)
+        return -1;
+
+    int brightness = rgb_to_brightness(state);
+
+    pthread_mutex_lock(&g_lock);
+    for (i = 0; i < NUM_BUTTON_FILES; i++) {
+        int ret;
+
+        if (access(BUTTON_FILES[i], F_OK))
+            continue;
+        ret = write_int(BUTTON_FILES[i], brightness);
+        if (ret)
+            err = ret;
+    }
+    pthread_mutex_unlock(&g_lock);
+    return err;
+}
+
+/* The buttons light exists only when the kernel registers a KPDBL row */
+static int have_buttons(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < NUM_BUTTON_FILES; i++)
+        if (!access(BUTTON_FILES[i], F_OK))
+            return 1;
+    return 0;
+}
+
 static int close_lights(struct light_device_t *dev)
 {
     free(dev);
@@ -115,6 +164,8 @@ static int open_lights(const struct hw_module_t *module, const char *name,
 
     if (!strcmp(LIGHT_ID_BACKLIGHT, name))
         set_light = set_light_backlight;
+    else if (!strcmp(LIGHT_ID_BUTTONS, name) && have_buttons())
+        set_light = set_light_buttons;
     else
         return -EINVAL;
 

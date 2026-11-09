@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// Lights HAL: display backlight only (AMOLED panel brightness through the
-// MDSS lcd-backlight device). The Lumia 930 has no key backlight and no
-// notification LED.
+// Lights HAL: display backlight (AMOLED panel brightness through the MDSS
+// lcd-backlight device) and, when the kernel registers the PM8941 KPDBL rows,
+// the capacitive key backlight. The Lumia 930 has no notification LED.
 cc_library_shared {
     name: "lights.msm8974",
     relative_install_path: "hw",

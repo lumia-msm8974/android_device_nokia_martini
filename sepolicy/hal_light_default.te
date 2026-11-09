@@ -1,3 +1,4 @@
-# Panel brightness (lcd-backlight LED class device of the MDSS driver)
+# Panel brightness (lcd-backlight LED class device of the MDSS driver) and
+# key backlight (PM8941 KPDBL rows, when the kernel enables them)
 allow hal_light_default sysfs_leds:dir search;
 allow hal_light_default sysfs_leds:file rw_file_perms;
