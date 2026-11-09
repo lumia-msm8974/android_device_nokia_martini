@@ -2,8 +2,8 @@ zImage-dtb: Linux 3.4 kernel for the Nokia Lumia 930 with the martini device
 tree appended. Built, never booted (no 930 tried yet).
 
 Source: https://github.com/lumia-msm8974/android_kernel_nokia_msm8974
-Branch: lineage-18.1-martini, commit fc8c31b0
+Branch: lineage-18.1-martini, commit 937437c0
 Config: lineage_martini_defconfig
 Toolchain: arm-linux-androideabi-4.9 (LineageOS 18.1 prebuilts)
 Build: make ARCH=arm CROSS_COMPILE=arm-linux-androideabi- lineage_martini_defconfig zImage-dtb
-SHA-256: 555c7147a59d78171a22a5c008409d6a592f3b7640944964fca9e8f4a5e967c2
+SHA-256: 7146e39988cdd8ca6c6af99e4396c79898494d79aa472a29412f00d54fd0d6d7
