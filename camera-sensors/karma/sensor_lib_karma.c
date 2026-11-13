@@ -30,6 +30,9 @@
  * multiplier 1000 (op_sys 2400 MHz over 4 lanes, about 600 Mbit/s per lane)
  * with op_pix_div 10 for RAW10.
  *
+ * Mode 2 (16:9 video): 5376x3024 (x 5..5380, y 364..3387), 2x2 binning,
+ * 2688x1512 RAW10, line_length 8000, frame_length 2000: 30 frames/s.
+ *
  * Copyright (c) 2026, Lorenzo Giannoccaro.
  */
 #include "../bacon_sensor_abi.h"
@@ -45,6 +48,9 @@
 #define KARMA_FULL_Y      3744
 #define KARMA_FULL_LINE   12000
 #define KARMA_FULL_FRAME  3770
+#define KARMA_V_X_OUT     2688   /* mode 2, binned 16:9 video */
+#define KARMA_V_Y_OUT     1512
+#define KARMA_V_FRAME_LEN 2000   /* line 8000: 30 frames/s */
 #define KARMA_VT_CLK      480000000
 #define KARMA_OP_CLK      240000000
 #define KARMA_MARGIN      8      /* coarse_integration_time_max_margin */
@@ -205,9 +211,28 @@ static struct k_i2c_reg_array res0_regs[] = {
     R(0x0204, 0x00), R(0x0205, KARMA_GAIN_CODE_MIN),
 };
 
+static struct k_i2c_reg_array res1_regs[] = {
+    R(0x0340, KARMA_V_FRAME_LEN >> 8), R(0x0341, KARMA_V_FRAME_LEN & 0xff),
+    R(0x0342, KARMA_LINE_LEN >> 8),  R(0x0343, KARMA_LINE_LEN & 0xff),
+    R(0x0344, 0x00), R(0x0345, 0x05),             /* x_addr_start 5 */
+    R(0x0346, 0x01), R(0x0347, 0x6c),             /* y_addr_start 364 */
+    R(0x0348, 0x15), R(0x0349, 0x04),             /* x_addr_end 5380 */
+    R(0x034a, 0x0d), R(0x034b, 0x3b),             /* y_addr_end 3387 */
+    R(0x034c, KARMA_V_X_OUT >> 8), R(0x034d, KARMA_V_X_OUT & 0xff),
+    R(0x034e, KARMA_V_Y_OUT >> 8), R(0x034f, KARMA_V_Y_OUT & 0xff),
+    R(0x0900, 0x01), R(0x0901, 0x22),             /* 2x2 binning */
+    R(0x0400, 0x00),                              /* no scaling */
+    R(0x0408, 0x00), R(0x0409, 0x00), R(0x040a, 0x00), R(0x040b, 0x00),
+    R(0x040c, KARMA_V_X_OUT >> 8), R(0x040d, KARMA_V_X_OUT & 0xff),
+    R(0x040e, KARMA_V_Y_OUT >> 8), R(0x040f, KARMA_V_Y_OUT & 0xff),
+    R(0x0202, 0x07), R(0x0203, 0x00),             /* coarse integration 1792 */
+    R(0x0204, 0x00), R(0x0205, KARMA_GAIN_CODE_MIN),
+};
+
 static struct k_i2c_reg_setting res_settings[] = {
     { res_full_regs, COUNT(res_full_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
     { res0_regs, COUNT(res0_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
+    { res1_regs, COUNT(res1_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
 };
 static struct b_reg_settings_array res_settings_array = { res_settings, COUNT(res_settings) };
 
@@ -232,6 +257,13 @@ static struct b_out_info out_info[] = {
         .binning_factor = 2, .binning_method = 0,
         .min_fps = 7.5f, .max_fps = 31.5f, .mode = 1,
     },
+    {
+        .x_output = KARMA_V_X_OUT, .y_output = KARMA_V_Y_OUT,
+        .line_length_pclk = KARMA_LINE_LEN, .frame_length_lines = KARMA_V_FRAME_LEN,
+        .vt_pixel_clk = KARMA_VT_CLK, .op_pixel_clk = KARMA_OP_CLK,
+        .binning_factor = 2, .binning_method = 0,
+        .min_fps = 7.5f, .max_fps = 30.0f, .mode = 1,
+    },
 };
 static struct b_out_info_array out_info_array = { out_info, COUNT(out_info) };
 
@@ -243,10 +275,10 @@ static struct k_csi2_params csi2_mode0 = {
     .csiphy_params = { .lane_cnt = 4, .settle_cnt = 20, .lane_mask = 0x0,
                        .combo_mode = 0, .csid_core = 0 },
 };
-static struct k_csi2_params *csi_params[] = { &csi2_mode0, &csi2_mode0 };
+static struct k_csi2_params *csi_params[] = { &csi2_mode0, &csi2_mode0, &csi2_mode0 };
 static struct b_csi_params_array csi_params_array = { csi_params, COUNT(csi_params) };
 
-static struct b_crop crop[] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
+static struct b_crop crop[] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
 static struct b_crop_array crop_array = { crop, COUNT(crop) };
 
 /* Stand-in tuning from the bacon IMX214 (same ISP, 1.12 um BSI) until the
@@ -254,6 +286,9 @@ static struct b_crop_array crop_array = { crop, COUNT(crop) };
 static struct b_chromatix chromatix[] = {
     { "libchromatix_imx214_common.so", "libchromatix_imx214_preview.so",
       "libchromatix_imx214_snapshot.so", "libchromatix_imx214_default_video.so",
+      "libchromatix_imx214_liveshot.so" },
+    { "libchromatix_imx214_common.so", "libchromatix_imx214_preview_binning.so",
+      "libchromatix_imx214_preview_binning.so", "libchromatix_imx214_video_binning.so",
       "libchromatix_imx214_liveshot.so" },
     { "libchromatix_imx214_common.so", "libchromatix_imx214_preview_binning.so",
       "libchromatix_imx214_preview_binning.so", "libchromatix_imx214_video_binning.so",
