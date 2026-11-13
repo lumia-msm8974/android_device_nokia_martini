@@ -37,6 +37,11 @@ on boot
     chown system system /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
     chmod 0660 /sys/devices/f9924000.i2c/i2c-2/2-004b/wake_gesture
 
+    # cpu-boost only sees the migrations of tasks whose cpuctl group has
+    # notify_on_migrate: all tasks are in the root group on this kernel, so
+    # without it boost_ms and sync_threshold never act (as on msm8974-common).
+    write /dev/cpuctl/cpu.notify_on_migrate 1
+
     # The vendor.perflock.base.* values are the baselines libmartini-perflock
     # restores when the power HAL starts (perf/perflock.c): keep them equal
     # to the governor values written next to them.

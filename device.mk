@@ -89,12 +89,25 @@ PRODUCT_PACKAGES += \
 # Boot animation
 TARGET_BOOTANIMATION_HALF_RES := true
 
-# Camera (no camera HAL for the 930 yet: 20 MP PureView rear camera, ACPI
-# QCOM2436, and 1.2 MP front camera, QCOM2437; the provider reports no
-# camera). Snap is left out until there is one (black window on the 1520).
+# Camera: QCamera2 HAL1 of msm8974-common (lumia-msm8974 fork, Lumia size
+# tables) over the 2014 mm-camera2 daemon of the OnePlus One (vendor tree),
+# with the Karma rear sensor and focus actuator plug-ins of camera-sensors/.
+# The front camera plug-in (skyphd) is not shipped yet: its CSI link does not
+# come up. The rear 4992-pixel mode needs both VFEs.
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
-    camera.device@1.0-impl
+    camera.device@1.0-impl \
+    camera.msm8974 \
+    libmmcamera_interface \
+    libmmjpeg_interface \
+    libqomx_core \
+    libmmcamera_karma \
+    libactuator_karma \
+    libactuator_karma_camera \
+    libactuator_karma_camcorder
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.camera.isp.dualisp=1
 
 # Charger
 PRODUCT_PACKAGES += \
@@ -216,15 +229,12 @@ endif
 # Bring-up builds (userdebug/eng). TODO: remove both for release builds.
 #  - no RescueParty: a crash loop of a system app during bring-up must not
 #    send the phone to the "factory reset?" recovery screen;
-#  - boot log on /data/vendor/bootlog (init.martini.bootlog.sh): these
-#    phones have no pstore or last_kmsg, and the periodic copy costs eMMC
-#    writes.
+#  - the boot log on /data/vendor/bootlog (init.martini.bootlog.sh) is off:
+#    the script never exits and costs CPU time and eMMC writes. Enable it
+#    when needed with setprop persist.vendor.martini.bootlog 1.
 ifneq ($(TARGET_BUILD_VARIANT),user)
 PRODUCT_SYSTEM_PROPERTIES += \
     persist.sys.disable_rescue=true
-
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.vendor.martini.bootlog=1
 endif
 
 # GPS: the msm8974-common location HAL (gps.msm8974, built from source)

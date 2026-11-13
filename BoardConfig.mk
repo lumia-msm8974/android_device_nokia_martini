@@ -103,6 +103,8 @@ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(DEVICE_PATH)/bluetooth
 
 # Build
 BUILD_BROKEN_DUP_RULES := true
+# The camera stack blobs of the vendor tree are copied as files
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 # FM radio: the WCN3680 FM core (kernel radio-iris on the APPS_FM SMD
 # channel, see device.mk). Builds the Qualcomm FM JNI

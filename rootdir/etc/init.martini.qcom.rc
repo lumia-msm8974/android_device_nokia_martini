@@ -297,3 +297,13 @@ service wcnss-service /vendor/bin/wcnss_service
     user system
     group system wifi oem_2950 diag radio
     oneshot
+
+# Camera daemon of the vendor camera stack (2014 mm-camera2): the HAL in
+# cameraserver connects to its socket in /data/misc/camera.
+service qcamerasvr /vendor/bin/mm-qcamera-daemon
+    class late_start
+    user camera
+    group camera system inet input graphics
+
+on property:init.svc.qcamerasvr=running
+    restart cameraserver
