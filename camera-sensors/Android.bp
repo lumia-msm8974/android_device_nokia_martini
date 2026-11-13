@@ -1,0 +1,19 @@
+// Sensor plug-ins for the bacon (OnePlus One) mm-camera2 daemon, written
+// from scratch against bacon_sensor_abi.h. They need no libc: the daemon
+// only reads the descriptor and calls the two exposure helpers.
+
+cc_library_shared {
+    name: "libmmcamera_karma",
+    vendor: true,
+    compile_multilib: "32",
+    srcs: ["karma/sensor_lib_karma.c"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-ffreestanding",
+        "-fvisibility=hidden",
+    ],
+    nocrt: true,
+    system_shared_libs: [],
+    stl: "none",
+}
