@@ -17,3 +17,51 @@ cc_library_shared {
     system_shared_libs: [],
     stl: "none",
 }
+
+// Focus actuator of the Karma module (lens driver behind the sensor, see
+// msm_actuator_lumia.c in the kernel) and its AF algorithm tuning, which
+// forwards to the tuning shipped with the daemon (libactuator_dw9714_*).
+
+cc_library_shared {
+    name: "libactuator_karma",
+    vendor: true,
+    compile_multilib: "32",
+    srcs: ["actuators/karma/actuator_lib_karma.c"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-ffreestanding",
+        "-fvisibility=hidden",
+    ],
+    nocrt: true,
+    system_shared_libs: [],
+    stl: "none",
+}
+
+cc_library_shared {
+    name: "libactuator_karma_camera",
+    vendor: true,
+    compile_multilib: "32",
+    srcs: ["actuators/karma/actuator_karma_af_algo.c"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-fvisibility=hidden",
+        "-DAF_MODE=camera",
+    ],
+    shared_libs: ["libdl"],
+}
+
+cc_library_shared {
+    name: "libactuator_karma_camcorder",
+    vendor: true,
+    compile_multilib: "32",
+    srcs: ["actuators/karma/actuator_karma_af_algo.c"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-fvisibility=hidden",
+        "-DAF_MODE=camcorder",
+    ],
+    shared_libs: ["libdl"],
+}

@@ -74,6 +74,7 @@ static struct k_power_setting power_down[] = {
 
 static struct k_slave_info slave_info = {
     .sensor_name = SENSOR_NAME,
+    .actuator_name = "karma",   /* kernel: subdev from qcom,actuator-src */
     .camera_id = 0,
     .slave_addr = 0x20,
     .addr_type = I2C_WORD_ADDR,
@@ -358,7 +359,7 @@ static struct b_exposure_func_table exposure_func_table = {
 static struct b_sensor_lib sensor_lib = {
     .sensor_slave_info = &slave_info,
     .sensor_init_params = &init_params,
-    .actuator_name = 0,
+    .actuator_name = "karma",   /* libactuator_karma.so */
     .eeprom_name = 0,
     .sensor_output = &output,
     .output_reg_addr = &output_reg_addr,
