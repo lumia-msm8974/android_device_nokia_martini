@@ -65,3 +65,19 @@ cc_library_shared {
     ],
     shared_libs: ["libdl"],
 }
+
+cc_library_shared {
+    name: "libmmcamera_skyphd",
+    vendor: true,
+    compile_multilib: "32",
+    srcs: ["skyphd/sensor_lib_skyphd.c"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-ffreestanding",
+        "-fvisibility=hidden",
+    ],
+    nocrt: true,
+    system_shared_libs: [],
+    stl: "none",
+}

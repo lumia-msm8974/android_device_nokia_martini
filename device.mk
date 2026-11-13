@@ -91,9 +91,9 @@ TARGET_BOOTANIMATION_HALF_RES := true
 
 # Camera: QCamera2 HAL1 of msm8974-common (lumia-msm8974 fork, Lumia size
 # tables) over the 2014 mm-camera2 daemon of the OnePlus One (vendor tree),
-# with the Karma rear sensor and focus actuator plug-ins of camera-sensors/.
-# The front camera plug-in (skyphd) is not shipped yet: its CSI link does not
-# come up. The rear 4992-pixel mode needs both VFEs.
+# with the Karma rear sensor and focus actuator plug-ins and the Skype_HD
+# front sensor plug-in of camera-sensors/. The HAL turns the dual VFE on for
+# the rear camera (4992-pixel mode) and off for the front one.
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
     camera.device@1.0-impl \
@@ -102,6 +102,7 @@ PRODUCT_PACKAGES += \
     libmmjpeg_interface \
     libqomx_core \
     libmmcamera_karma \
+    libmmcamera_skyphd \
     libactuator_karma \
     libactuator_karma_camera \
     libactuator_karma_camcorder
