@@ -55,7 +55,11 @@ the 930):
   provisioned into `/persist` from the Windows DPP partition
   (`init.martini.wifi.sh`, `init.qcom.bt.sh`);
 - audio: WCD9320 mixer paths with the loudspeaker on the TAS2552 amplifier
-  on the secondary MI2S (BLSP1 QUP5 0x40, enable PM8941 GPIO20);
+  on the secondary MI2S (BLSP1 QUP5 0x40, enable PM8941 GPIO20). The stock
+  930 audio configuration (ACPI tables, codec driver, ACDB device to codec
+  path map) is the 1520 one, so the 1520 routes and measured mic inputs
+  apply: earpiece EAR, headset HPH + ADC2, main mic DMIC3, speakerphone mic
+  DMIC4; speaker on ACDB device 70 as on Windows;
 - GPS through the msm8974-common location HAL and QMI LOC;
 - partition layout created inside the Windows Data space by the installer.
 
@@ -204,14 +208,15 @@ Still open:
       take the registry of `sensors.qcom`, and are the axes right
       (`sensors/ssc/`, on by default, `persist.vendor.martini.ssc 0` to turn it off)?
 - [ ] product code(s) of the phone (RM-1045, RM-1087) for the OTA assert;
-- [ ] audio: microphones (ACDB device IDs); vibrator: Windows drives it
-      through the audio codec (`hwnvibraaudiocodec`), the PMIC vibrator
-      with the GPIO 8 enable is what the 17.1 port uses.
+- [ ] audio: which DMIC is which on the 930 (1520 inputs assumed); vibrator:
+      Windows drives it through the audio codec (`hwnvibraaudiocodec`), the
+      PMIC vibrator with the GPIO 8 enable is what the 17.1 port uses; the
+      codec route is the `vibra-lineout` test path.
 
 To extract from the 930 Windows firmware (FFU or the phone's MainOS):
 
 - [ ] ADSP, modem + MBA, WCNSS, Venus images and `qcwlan8974cfg.dat`;
-- [ ] ACDB audio calibration files;
+- [x] ACDB audio calibration files (vendor, from DEVICE.SOC_QC8974.MARTINI);
 - [ ] DPP provisioning (Wi-Fi NV/MAC, Bluetooth address) through the
       installer.
 
@@ -252,7 +257,8 @@ To test on the phone:
 - 2314372037 ("zh"), [android_device_nokia_martini](https://github.com/2314372037/android_device_nokia_martini)
   (LineageOS 17.1, branch `lineage-17.1`, `da9e108`): the first Android port
   that boots on the 930; used for comparison (TAS2552 speaker route,
-  partition layout, key mappings).
+  partition layout, key mappings) and for the codec route of the vibra
+  motor driver ("N2183", LINEOUT2/LINEOUT4, `0426fcb`).
 - KorelisLabs, [lumia-1520-mainline](https://github.com/KorelisLabs/lumia-1520-mainline):
   boot chain, hardware map and TrustZone findings for the 1520 (also the
   addresses of its BLSP2 QUP6 sensors, which the shared Sensor Core

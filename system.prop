@@ -9,9 +9,10 @@ ro.qualcomm.cabl=0
 # ro.frp.pst=/dev/block/platform/msm_sdcc.1/by-name/persistent once it is
 # smaller or SMP works.
 
-# Audio: single mic in calls. On the 1520 the dual-mic endfire device
-# (ACDB 41) has no voice calibration pair with the earpiece (7) in the ACDB
-# in use. TODO: check the 930 ACDB.
+# Audio: single mic in calls (stock pair 7/4, as Windows). The 930 ACDB has
+# no voice pair 7/41 (41 is the quad-mic portrait device there); with this
+# property true the HAL takes the stock endfire device 6 (pair 6/7, set in
+# audio_platform_info.xml) for the dual-mic call.
 persist.vendor.audio.fluence.voicecall=false
 
 # Radio: Qualcomm QMI RIL from the generic MSM8974 blobs

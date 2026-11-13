@@ -1,13 +1,31 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Lumia 930 (martini), from the Lumia 1520 (bandit): the TAS2552
-     loudspeaker amplifier sits on the secondary MI2S, not on a WCD9320
-     output (1520 stock ACDB device 70, SEC_MI2S_RX; the 930 ACDB is still
-     to be checked).
-     The "sec-mi2s" backend selects the "<usecase> sec-mi2s" paths of
-     mixer_paths.xml. ACDB IDs keep the MSM8974 defaults, which match the
-     stock calibration (7 handset, 14 speaker, 10 headphones, 4 handset mic,
-     11 speaker mic, 8 headset mic) on the 1520. TODO: verify on the 930. -->
+<!-- Lumia 930 (martini). Device IDs from the stock RM-1045 calibration
+     (ACDB of DEVICE.SOC_QC8974.MARTINI, in the vendor tree) and from the
+     RX/TX pairs the stock audio driver opens (ACPI QCRT.DEVI). The MSM8974
+     defaults already match for the earpiece (7), headphones (10), handset
+     mic (4), speakerphone mic (11) and headset mic (8).
+
+     Loudspeaker: the TAS2552 amplifier sits on the secondary MI2S, not on
+     a WCD9320 output. Windows plays and calls through it as ACDB device 70
+     (SEC_MI2S_RX, pairs 70/0 and 70/11; 81 for ringtones), not 14
+     (SPKR_PHONE_SPKR_MONO, a codec LINEOUT path), so the speaker devices
+     take 70: its audio calibration and the speakerphone voice pair 11/70
+     exist in the 930 ACDB. The "sec-mi2s" backend selects the
+     "<usecase> sec-mi2s" paths of mixer_paths.xml.
+
+     Dual-mic voice: the HAL default 41 is AUDIO_DEVICE_QUAD_MIC_POTRAIT in
+     the stock ACDB, with no voice pair for the earpiece. The stock endfire
+     device is 6 (HANDSET_MIC_ENDFIRE, voice pair 6/7, standard Fluence V5
+     topology). Used only if persist.vendor.audio.fluence.voicecall is
+     true (false in system.prop). -->
 <audio_platform_info>
+    <acdb_ids>
+        <device name="SND_DEVICE_OUT_SPEAKER" acdb_id="70"/>
+        <device name="SND_DEVICE_OUT_SPEAKER_REVERSE" acdb_id="70"/>
+        <device name="SND_DEVICE_OUT_VOICE_SPEAKER" acdb_id="70"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC" acdb_id="6"/>
+        <device name="SND_DEVICE_IN_VOICE_DMIC" acdb_id="6"/>
+    </acdb_ids>
     <backend_names>
         <device name="SND_DEVICE_OUT_SPEAKER" backend="sec-mi2s"/>
         <device name="SND_DEVICE_OUT_SPEAKER_REVERSE" backend="sec-mi2s"/>
