@@ -398,11 +398,11 @@ PRODUCT_PACKAGES += \
 # qcSensors settings), the daemon start, and the multihal config of the 1.0
 # impl (vendor/etc/sensors/hals.conf), which loads sensors.martini and the
 # Qualcomm sensors.msm8974 HAL side by side. Blobs: msm8974-common.
-# On by default (user's choice, 09/11/2026), never run on a 930 yet: the
-# Windows ADSP image may not accept this daemon and a stuck HAL would stall
-# system_server. Rollback on the phone without reflashing:
-# setprop persist.vendor.martini.ssc 0 and reboot (init.martini.ssc.rc);
-# MARTINI_SENSORS_SSC=false builds without it.
+# Built but off by default: on the first real RM-1045 (13/11/2026) the
+# sensors.msm8974 HAL crashed in Sensor::getAttribOK() from poll(), inside
+# system_server, every 10 s, and Android never left the boot animation.
+# To try it on a phone: setprop persist.vendor.martini.ssc 1 and reboot
+# (init.martini.ssc.rc); MARTINI_SENSORS_SSC=false builds without it.
 # No step counter/detector: on Windows they are Nokia ADSP algorithms
 # (SSC_NOKIA_*) that the Qualcomm HAL cannot reach.
 MARTINI_SENSORS_SSC ?= true
@@ -422,7 +422,7 @@ PRODUCT_COPY_FILES += \
 # framework builds rotation vector, game and geomagnetic rotation vector
 # from the physical ones). The wake-up copies are left out as well.
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.vendor.martini.ssc=1 \
+    persist.vendor.martini.ssc=0 \
     ro.qti.sdk.sensors.gestures=false \
     ro.qti.sensors.amd=false \
     ro.qti.sensors.cmc=false \
