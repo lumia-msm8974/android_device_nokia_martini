@@ -2,51 +2,56 @@
 /*
  * Sensor plug-in for the rear "Karma" camera module of the Nokia Lumia 930
  * (and 1520), for the 2014 MSM8974 mm-camera2 daemon of OnePlus One (bacon).
- * Written from scratch against camera-sensors/bacon_sensor_abi.h.
+ * Written against camera-sensors/bacon_sensor_abi.h.
  *
  * Module: SMIA++ module 0x4541 (manufacturer 0x10, revision 7 on the test
  * phone), Toshiba die 0x2170, CCI master 0 at 7-bit 0x10, 4 CSI-2 lanes,
- * GRBG Bayer from an even column (pixel_order 0x0006 = 0), data pedestal 16
- * at 8 bits.
+ * data pedestal 16 at 8 bits. The image is turned by 180 degrees in the
+ * sensor (0x0101 = 3), which makes the Bayer order GBRG.
  *
- * Everything below comes from the sensor itself (SMIA identification,
- * limit and default registers read on the phone, see the project notes) and
- * from the Windows PEP power sequence: no Windows tuning data is used here.
+ * The module register settings (defect correction, analog setup, calibration
+ * loads, standby entry and exit) are in karma_module_regs.h, applied in the
+ * order idle -> standby exit -> stream on, and standby entry after stream
+ * off. Clock tree, windows and timing below come from the SMIA++ limit
+ * registers of the sensor.
  *
- * Mode 0 (snapshot/ZSL): centre 4208x3120 window, no binning (x 589..4796,
- * y 316..3435), RAW10, line_length 12000 (25 us lines, about 420 Mbit/s per
- * lane), frame_length 3146: 12.7 frames/s. 4208x3120 is the largest picture
- * size the msm8974 QCamera2 HAL lists, and the VFE takes it (bacon IMX214).
+ * Mode 0 (snapshot/ZSL): 4:3 still, 4992x3744 (x 197..5188, y 4..3747, full
+ * array height), no binning or scaling, RAW10, line_length 12000 (25 us
+ * lines, about 500 Mbit/s per lane), frame_length 3770: 10.6 frames/s. The
+ * dual VFE (persist.camera.isp.dualisp=1) takes half the columns each. The
+ * sensor scaler (0x0400) gave an almost black picture, so it stays off.
  *
- * Mode 1 (preview/video): full field of view 5376x3744 (x 5..5380,
- * y 4..3747), 2x2 binning (0x0900 = 1, 0x0901 = 0x22), 2688x1872 RAW10. The power-on PLL is kept for the pixel array
- * (EXTCLK 9.6 MHz, pre-div 2, multiplier 1600, vt_sys_div 2, vt_pix_div 8:
- * vt_pix_clk 480 MHz, measured as 63 frames/s with the default 4000 x 1902
- * timing). line_length 8000 halves the line rate (31.5 frames/s), so the
- * output PLL can drop to multiplier 1000 (op_sys 2400 MHz over 4 lanes,
- * about 600 Mbit/s per lane) with op_pix_div 10 for RAW10.
+ * Mode 1 (preview/video): 4:3 viewfinder, 4992x3744 (x 197..5188,
+ * y 4..3747), 2x2 binning (0x0900 = 1, 0x0901 = 0x22), 2496x1872 RAW10. The
+ * power-on PLL is kept for the pixel array (EXTCLK 9.6 MHz, pre-div 2,
+ * multiplier 1600, vt_sys_div 2, vt_pix_div 8: vt_pix_clk 480 MHz, measured
+ * as 63 frames/s with the default 4000 x 1902 timing). line_length 8000
+ * halves the line rate (31.5 frames/s), so the output PLL can drop to
+ * multiplier 1000 (op_sys 2400 MHz over 4 lanes, about 600 Mbit/s per lane)
+ * with op_pix_div 10 for RAW10.
  *
  * Copyright (c) 2026, Lorenzo Giannoccaro.
  */
 #include "../bacon_sensor_abi.h"
+#include "karma_module_regs.h"
 
 #define SENSOR_NAME "karma"
 
-#define KARMA_X_OUT       2688   /* mode 1, binned */
+#define KARMA_X_OUT       2496   /* mode 1, binned 4:3 viewfinder */
 #define KARMA_Y_OUT       1872
 #define KARMA_LINE_LEN    8000
 #define KARMA_FRAME_LEN   1902
-#define KARMA_FULL_X      4208   /* mode 0, centre crop */
-#define KARMA_FULL_Y      3120
+#define KARMA_FULL_X      4992   /* mode 0, 4:3 still */
+#define KARMA_FULL_Y      3744
 #define KARMA_FULL_LINE   12000
-#define KARMA_FULL_FRAME  3146
+#define KARMA_FULL_FRAME  3770
 #define KARMA_VT_CLK      480000000
 #define KARMA_OP_CLK      240000000
 #define KARMA_MARGIN      8      /* coarse_integration_time_max_margin */
 #define KARMA_GAIN_CODE_MIN 55   /* gain = code / 55 (m0 1, c1 55) */
 #define KARMA_GAIN_CODE_MAX 440
 
-/* ---- power: Windows PEP order (CAMP F0 then CAMS D0) ---- */
+/* ---- power: I/O rail, standby GPIO, analog rail, then MCLK ---- */
 static struct k_power_setting power_up[] = {
     { .seq_type = SEQ_VREG, .seq_val = VREG_VIO,  .config_val = 0,         .delay = 1 },
     { .seq_type = SEQ_GPIO, .seq_val = GPIO_VDIG, .config_val = GPIO_HIGH, .delay = 10 },
@@ -76,7 +81,7 @@ static struct k_slave_info slave_info = {
 static struct k_sensor_init_params init_params = {
     .modes_supported = 0,
     .position = 0,              /* back */
-    .sensor_mount_angle = 90,
+    .sensor_mount_angle = 90,   /* with the sensor image turned by 0x0101 = 3 */
 };
 
 static struct b_output output = { OUT_BAYER, CONN_MIPI, RAW_10BIT };
@@ -84,7 +89,7 @@ static struct b_output_reg_addr output_reg_addr = { 0x034c, 0x034e, 0x0342, 0x03
 static struct b_exp_gain_info exp_gain_info = { 0x0202, 0x0204, KARMA_MARGIN };
 static struct b_aec_info aec_info = { .max_gain = 8.0f, .max_linecount = 65535 - KARMA_MARGIN };
 
-/* 4.46 mm, 1.12 um, f/2.43 (Windows registry and module data); 5376x3744 area. */
+/* 4.46 mm, 1.12 um, f/2.43; 5376x3744 area. */
 static struct b_lens_info lens_info = { 4.46f, 1.12f, 2.43f, 1.97f, 68.0f, 50.4f };
 
 static struct k_csi_lane_params csi_lane_params = {
@@ -100,11 +105,10 @@ static struct k_csid_vc_cfg cid_cfg[] = {
     { .cid = 1, .dt = 0x12, .decode_format = CSI_DECODE_8BIT },
 };
 
-/* The array is GRBG from an even column; both windows start on an odd column,
- * so the output is RGGB, the order of the bacon IMX214 tuning and of the
- * format the ISP expects for it. */
+/* GBRG with the 180 degree turn and windows starting on an odd column
+ * (checked on the phone against the other three orders). */
 #ifndef KARMA_FOURCC
-#define KARMA_FOURCC 0x30314752 /* 'RG10' = V4L2_PIX_FMT_SRGGB10 */
+#define KARMA_FOURCC 0x30314247 /* 'GB10' = V4L2_PIX_FMT_SGBRG10 */
 #endif
 static uint32_t fourcc_rggb10[] = { KARMA_FOURCC };
 static uint32_t fourcc_meta[] = { 0x4154454d /* 'META' */ };
@@ -116,9 +120,16 @@ static struct b_stream_info_array stream_info_array = { stream_info, COUNT(strea
 
 /* ---- register settings ---- */
 #define R(a, d) { (a), (d), 0 }
+#ifndef KARMA_RED_GAIN
+#define KARMA_RED_GAIN 0x0100
+#endif
+#ifndef KARMA_BLUE_GAIN
+#define KARMA_BLUE_GAIN 0x0140
+#endif
 
 static struct k_i2c_reg_array init_regs[] = {
-    R(0x0101, 0x00),                  /* image orientation: none */
+    KARMA_MODULE_IDLE,
+    R(0x0101, 0x03),                  /* image orientation: H mirror + V flip */
     R(0x0112, 0x0a), R(0x0113, 0x0a), /* RAW10 */
     R(0x0114, 0x03),                  /* 4 lanes */
     R(0x0136, 0x09), R(0x0137, 0x9a), /* EXTCLK 9.6 MHz */
@@ -130,6 +141,12 @@ static struct k_i2c_reg_array init_regs[] = {
     R(0x030a, 0x00), R(0x030b, 0x02), /* op_sys_clk_div 2 */
     R(0x030c, 0x00), R(0x030d, 0x02), /* op_pre_pll_clk_div 2 */
     R(0x030e, 0x03), R(0x030f, 0xe8), /* op_pll_multiplier 1000 */
+    /* Per-channel digital gain (8.8): blue raised to pull the auto white
+     * balance away from the yellow cast seen on the phone. */
+    R(0x020e, 0x01), R(0x020f, 0x00), /* green (red row) */
+    R(0x0210, KARMA_RED_GAIN >> 8), R(0x0211, KARMA_RED_GAIN & 0xff),
+    R(0x0212, KARMA_BLUE_GAIN >> 8), R(0x0213, KARMA_BLUE_GAIN & 0xff),
+    R(0x0214, 0x01), R(0x0215, 0x00), /* green (blue row) */
 };
 
 static struct k_i2c_reg_setting init_settings[] = {
@@ -137,22 +154,28 @@ static struct k_i2c_reg_setting init_settings[] = {
 };
 static struct b_reg_settings_array init_settings_array = { init_settings, COUNT(init_settings) };
 
-static struct k_i2c_reg_array start_regs[] = { R(0x0100, 0x01) };
-static struct k_i2c_reg_array stop_regs[]  = { R(0x0100, 0x00) };
+static struct k_i2c_reg_array start_regs[] = {
+    KARMA_MODULE_STANDBY_EXIT,
+    R(0x0100, 0x01),
+};
+static struct k_i2c_reg_array stop_regs[] = {
+    R(0x0100, 0x00),
+    KARMA_MODULE_STANDBY_ENTER,
+};
 static struct k_i2c_reg_array groupon_regs[]  = { R(0x0104, 0x01) };
 static struct k_i2c_reg_array groupoff_regs[] = { R(0x0104, 0x00) };
-static struct k_i2c_reg_setting start_settings = { start_regs, 1, I2C_WORD_ADDR, I2C_BYTE_DATA, 10 };
-static struct k_i2c_reg_setting stop_settings = { stop_regs, 1, I2C_WORD_ADDR, I2C_BYTE_DATA, 10 };
+static struct k_i2c_reg_setting start_settings = { start_regs, COUNT(start_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 10 };
+static struct k_i2c_reg_setting stop_settings = { stop_regs, COUNT(stop_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 10 };
 static struct k_i2c_reg_setting groupon_settings = { groupon_regs, 1, I2C_WORD_ADDR, I2C_BYTE_DATA, 0 };
 static struct k_i2c_reg_setting groupoff_settings = { groupoff_regs, 1, I2C_WORD_ADDR, I2C_BYTE_DATA, 0 };
 
 static struct k_i2c_reg_array res_full_regs[] = {
     R(0x0340, KARMA_FULL_FRAME >> 8), R(0x0341, KARMA_FULL_FRAME & 0xff),
     R(0x0342, KARMA_FULL_LINE >> 8),  R(0x0343, KARMA_FULL_LINE & 0xff),
-    R(0x0344, 0x02), R(0x0345, 0x4d),             /* x_addr_start 589 */
-    R(0x0346, 0x01), R(0x0347, 0x3c),             /* y_addr_start 316 */
-    R(0x0348, 0x12), R(0x0349, 0xbc),             /* x_addr_end 4796 */
-    R(0x034a, 0x0d), R(0x034b, 0x6b),             /* y_addr_end 3435 */
+    R(0x0344, 0x00), R(0x0345, 0xc5),             /* x_addr_start 197 */
+    R(0x0346, 0x00), R(0x0347, 0x04),             /* y_addr_start 4 */
+    R(0x0348, 0x14), R(0x0349, 0x44),             /* x_addr_end 5188 */
+    R(0x034a, 0x0e), R(0x034b, 0xa3),             /* y_addr_end 3747 */
     R(0x034c, KARMA_FULL_X >> 8), R(0x034d, KARMA_FULL_X & 0xff),
     R(0x034e, KARMA_FULL_Y >> 8), R(0x034f, KARMA_FULL_Y & 0xff),
     R(0x0900, 0x00), R(0x0901, 0x11),             /* no binning */
@@ -167,9 +190,9 @@ static struct k_i2c_reg_array res_full_regs[] = {
 static struct k_i2c_reg_array res0_regs[] = {
     R(0x0340, KARMA_FRAME_LEN >> 8), R(0x0341, KARMA_FRAME_LEN & 0xff),
     R(0x0342, KARMA_LINE_LEN >> 8),  R(0x0343, KARMA_LINE_LEN & 0xff),
-    R(0x0344, 0x00), R(0x0345, 0x05),             /* x_addr_start 5 */
+    R(0x0344, 0x00), R(0x0345, 0xc5),             /* x_addr_start 197 */
     R(0x0346, 0x00), R(0x0347, 0x04),             /* y_addr_start 4 */
-    R(0x0348, 0x15), R(0x0349, 0x04),             /* x_addr_end 5380 */
+    R(0x0348, 0x14), R(0x0349, 0x44),             /* x_addr_end 5188 */
     R(0x034a, 0x0e), R(0x034b, 0xa3),             /* y_addr_end 3747 */
     R(0x034c, KARMA_X_OUT >> 8), R(0x034d, KARMA_X_OUT & 0xff),
     R(0x034e, KARMA_Y_OUT >> 8), R(0x034f, KARMA_Y_OUT & 0xff),
@@ -200,7 +223,7 @@ static struct b_out_info out_info[] = {
         .line_length_pclk = KARMA_FULL_LINE, .frame_length_lines = KARMA_FULL_FRAME,
         .vt_pixel_clk = KARMA_VT_CLK, .op_pixel_clk = KARMA_OP_CLK,
         .binning_factor = 1, .binning_method = 0,
-        .min_fps = 7.5f, .max_fps = 12.7f, .mode = 1,
+        .min_fps = 7.5f, .max_fps = 10.6f, .mode = 1,
     },
     {
         .x_output = KARMA_X_OUT, .y_output = KARMA_Y_OUT,
