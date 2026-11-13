@@ -130,7 +130,7 @@ static struct b_stream_info_array stream_info_array = { stream_info, COUNT(strea
 #define KARMA_RED_GAIN 0x0100
 #endif
 #ifndef KARMA_BLUE_GAIN
-#define KARMA_BLUE_GAIN 0x0140
+#define KARMA_BLUE_GAIN 0x0100
 #endif
 
 static struct k_i2c_reg_array init_regs[] = {
@@ -284,15 +284,15 @@ static struct b_crop_array crop_array = { crop, COUNT(crop) };
 /* Stand-in tuning from the bacon IMX214 (same ISP, 1.12 um BSI) until the
  * Karma one exists. */
 static struct b_chromatix chromatix[] = {
-    { "libchromatix_imx214_common.so", "libchromatix_imx214_preview.so",
-      "libchromatix_imx214_snapshot.so", "libchromatix_imx214_default_video.so",
-      "libchromatix_imx214_liveshot.so" },
-    { "libchromatix_imx214_common.so", "libchromatix_imx214_preview_binning.so",
-      "libchromatix_imx214_preview_binning.so", "libchromatix_imx214_video_binning.so",
-      "libchromatix_imx214_liveshot.so" },
-    { "libchromatix_imx214_common.so", "libchromatix_imx214_preview_binning.so",
-      "libchromatix_imx214_preview_binning.so", "libchromatix_imx214_video_binning.so",
-      "libchromatix_imx214_liveshot.so" },
+    { "libchromatix_karma_common.so", "libchromatix_karma_preview.so",
+      "libchromatix_karma_snapshot.so", "libchromatix_karma_default_video.so",
+      "libchromatix_karma_liveshot.so" },
+    { "libchromatix_karma_common.so", "libchromatix_karma_preview_binning.so",
+      "libchromatix_karma_preview_binning.so", "libchromatix_karma_video_binning.so",
+      "libchromatix_karma_liveshot.so" },
+    { "libchromatix_karma_common.so", "libchromatix_karma_preview_binning.so",
+      "libchromatix_karma_preview_binning.so", "libchromatix_karma_video_binning.so",
+      "libchromatix_karma_liveshot.so" },
 };
 static struct b_chromatix_array chromatix_array = { chromatix, COUNT(chromatix) };
 
