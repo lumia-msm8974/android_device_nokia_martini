@@ -1,0 +1,11 @@
+# init.martini.qcom.rc: "write /dev/wcnss_wlan 1" loads the Pronto firmware
+# (wcnss_wlan driver) after init.martini.wifi.sh has prepared the cfg files
+# (1520 denial: vendor_init write on wcnss_device)
+allow vendor_init wcnss_device:chr_file w_file_perms;
+
+# init.martini.rc: zram swappiness
+allow vendor_init proc_swappiness:file w_file_perms;
+
+# Modem kill switch (init.martini.qcom.rc): pil_q6v5_mss.boot_enabled. The
+# "write" commands of /vendor/etc/init run in vendor_init, not init.
+allow vendor_init sysfs_pil_mss:file w_file_perms;

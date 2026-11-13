@@ -1,0 +1,14 @@
+# ril/lumia-uim-bootstrap: opens the USIM session that the Windows modem
+# firmware leaves DETECTED, through qmuxd (libqmi_cci). Started by init as
+# radio when qmuxd runs. Without a domain init refuses to start it in
+# enforcing mode (on the 1520 it ran in the init domain: denials on
+# qmuxd_socket and on the QMI socket ioctls).
+type lumia_uim_bootstrap, domain;
+type lumia_uim_bootstrap_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(lumia_uim_bootstrap)
+
+# QMI through qmuxd (/dev/socket/qmux_radio) and the IPC router sockets
+qmux_socket(lumia_uim_bootstrap)
+allow lumia_uim_bootstrap self:socket create_socket_perms;
+allowxperm lumia_uim_bootstrap self:socket ioctl msm_sock_ipc_ioctls;

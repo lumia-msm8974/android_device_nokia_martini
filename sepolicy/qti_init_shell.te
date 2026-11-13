@@ -1,6 +1,12 @@
 # init.martini.wifi.sh: read the MAC addresses from the DPP partition
 allow qti_init_shell martini_dpp_file:dir r_dir_perms;
 allow qti_init_shell martini_dpp_file:file r_file_perms;
+# ... bind mount the NV file of /persist and the cfg file with the MAC
+# addresses over the copies in /vendor/firmware/wlan/prima ...
+allow qti_init_shell firmware_file:file mounton;
+# ... after writing the cfg file in /data/vendor/wifi (cp, sed -i)
+allow qti_init_shell wifi_vendor_data_file:dir create_dir_perms;
+allow qti_init_shell wifi_vendor_data_file:file create_file_perms;
 
 # init.martini.power.sh: list /sys/class/devfreq and set the governor of the
 # qcom,cpubw.<N> node (sysfs_devfreq in sepolicy-legacy's file_contexts)

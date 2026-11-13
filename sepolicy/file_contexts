@@ -10,7 +10,30 @@
 # Init scripts
 /(vendor|system/vendor)/bin/init\.martini\.wifi\.sh      u:object_r:qti_init_shell_exec:s0
 /(vendor|system/vendor)/bin/init\.martini\.power\.sh     u:object_r:qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/init\.martini\.fm\.sh        u:object_r:qti_init_shell_exec:s0
 
 # Bring-up boot log
 /(vendor|system/vendor)/bin/init\.martini\.bootlog\.sh   u:object_r:martini_bootlog_exec:s0
 /data/vendor/bootlog(/.*)?                             u:object_r:martini_bootlog_data_file:s0
+
+# SIM bootstrap helper (ril/lumia-uim-bootstrap.c)
+/(vendor|system/vendor)/bin/lumia-uim-bootstrap         u:object_r:lumia_uim_bootstrap_exec:s0
+
+# sysfs nodes whose path depends on bus or device numbers known only on the
+# phone. ueventd relabels /sys/devices from these entries at cold boot,
+# before the HALs start; the genfs_contexts entries for the 1520 numbers
+# stay as a fallback.
+# Battery and chargers (qpnp-bms, qpnp-charger platform device numbers)
+/sys/devices/qpnp-(bms|charger)-[0-9]+/power_supply(/.*)?        u:object_r:sysfs_batteryinfo:s0
+# RTC (qpnp-rtc platform device number; msm8974-common labels qpnp-rtc-17),
+# read by timekeep
+/sys/devices/qpnp-rtc-[0-9]+(/.*)?                               u:object_r:sysfs_rtc:s0
+# APDS-9930 on BLSP1 QUP3 (I2C bus number unverified)
+/sys/devices/f9925000\.i2c/i2c-[0-9]+/[0-9]+-0039(/.*)?          u:object_r:sysfs_sensors:s0
+# Synaptics touch controller on BLSP1 QUP2: key disabler, double tap to wake
+/sys/devices/f9924000\.i2c/i2c-[0-9]+/[0-9]+-004b/(0dbutton|wake_gesture) u:object_r:sysfs_touchpanel:s0
+# Panel brightness: the lcd-backlight LED of the MDSS framebuffer
+# (mdss_fb_primary.<N> under the "mdp.0" device of board-8974.c), written by
+# the light HAL. sepolicy-legacy only covers the 3.10 soc.0 path, so here it
+# would be plain sysfs, which hal_light_default cannot write.
+/sys/devices/mdp\.0/qcom,mdss_fb_primary\.[0-9]+/leds/lcd-backlight(/.*)? u:object_r:sysfs_leds:s0

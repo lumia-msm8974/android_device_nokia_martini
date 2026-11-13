@@ -1,0 +1,2 @@
+# hci_qcomm_init (init.qcom.bt.sh): WCNSS SMD channel state
+allow bluetooth_loader sysfs_wcnss_smd:file r_file_perms;

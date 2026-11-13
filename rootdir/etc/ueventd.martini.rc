@@ -186,3 +186,9 @@
 
 # Capacitive key backlight (PM8941 KPDBL rows), written by the lights HAL
 /sys/devices/leds-qpnp-*/leds/kpdbl-pwm-*   brightness   0664 system system
+
+# Factory reset protection: PersistentDataBlockService (system_server) opens
+# ro.frp.pst. ueventd matches the by-name link too; a chown in an init .rc
+# would only change the link (init uses lchown) and SELinux denies it to
+# vendor_init.
+/dev/block/platform/msm_sdcc.1/by-name/persistent   0660   system   system

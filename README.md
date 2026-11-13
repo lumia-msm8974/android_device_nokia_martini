@@ -147,7 +147,38 @@ It only changes the LineageOS and AOSP settings that LineageParts also
 uses, so it needs no permission, init or SELinux change here. `device.mk`
 adds it when the app is checked out.
 
-## Modem (on, unverified on a 930)
+## FM radio (unverified on a 930)
+
+The 930 has FM radio on Windows Phone, through the FM core of the WCN3680:
+the stock image enumerates it as a function of the WCNSS (ACPI
+`\_SB.RIVA.FMT0`, `QWCN\QCOM2150`), its Qualcomm transport driver talks
+to the Pronto firmware over the `APPS_FM` SMD channel, and the FM Radio
+app is not hidden (`FMRadio\OEM\NotPresent` 0, region 2: 87.5-108 MHz,
+100 kHz). Android uses the same channel:
+
+- kernel: `radio-iris` and `radio-iris-transport` (`/dev/radio0`, kernel
+  branch `martini-fm`); the `qcom,iris-fm` node of `msm8974.dtsi` is
+  already on;
+- `FMRadio` (packages/apps/FMRadio) on the Qualcomm JNI
+  (vendor/qcom/opensource/libfmjni, `BOARD_HAVE_QCOM_FM`), which starts
+  `vendor.fm` (`init.martini.fm.rc`, `init.martini.fm.sh`) to open the SMD
+  transport;
+- audio: the FM core feeds the LPASS internal FM port (`INT_FM_TX`).
+  FMRadio records it (`fm-virtual-record capture-fm`, MultiMedia2) and
+  plays it on the normal outputs, speaker included; the hostless `play-fm`
+  path of the audio HAL (`AUDIO_FEATURE_ENABLED_FM_POWER_OPT`) only reaches
+  the headphones;
+- the headset cable is the antenna: nothing selects another one (libfmjni
+  asks for the internal antenna only with
+  `vendor.hw.fm.internal_antenna=true`; no internal FM antenna is known on
+  the 930).
+
+Not done: the calibration that Windows runs (`fm_qsoc_patches` is not in
+the tree), and the search thresholds of the Windows registry
+(`Tuner\Audio\FmRadio`: SINR 3, SINR samples 10, interference 109/115,
+RMSSI first stage -112, CF0 15000), since libfmjni reads the values of
+`fm_srch_af_th.conf` from the wrong group.
+
 
 The kernel starts the modem as on the 1520: MSA self-auth, MBA at
 0x0d100000 and modem at 0x08000000 (their ELF addresses, inside the stock
@@ -178,8 +209,8 @@ Kill switch, from the lightest to the strongest:
   with `pil_q6v5_mss.boot_enabled=0` added to its command line
   (`fastboot boot`), then set the property from that boot.
 
-`androidboot.selinux=permissive` is still set; the gate parameters carry
-their own label (`sysfs_pil_mss`) for init.
+The gate parameters carry their own label (`sysfs_pil_mss`) for
+`vendor_init`, which runs the `write` commands of `/vendor/etc/init`.
 
 ## Bring-up settings (turn off for releases)
 
@@ -192,6 +223,43 @@ On non-user builds `device.mk` sets:
   `/data/vendor/bootlog/` every 5 s for 30 minutes of each boot (previous
   boot in `*.prev.txt`), since the phone has no pstore or last_kmsg. The
   periodic `sync` costs eMMC writes: it must be off in release builds.
+
+## SELinux
+
+Builds are permissive from the kernel command line
+(`androidboot.selinux=permissive`, `BoardConfig.mk`) until the policy has
+been checked on a 930. `MARTINI_SELINUX_ENFORCING=true m bacon` builds the
+same tree without it, so the phone starts enforcing; only the boot image
+changes.
+
+`sepolicy/` holds what the martini pieces need on top of
+`device/qcom/sepolicy-legacy` and `device/oppo/msm8974-common/sepolicy`,
+written from a review of the init scripts and services and from the
+denials of the permissive 1520 boots (same stack):
+
+- `lumia-uim-bootstrap` gets its own domain: without one init would not
+  start it in enforcing mode (on the 1520 it ran as `init`);
+- `vendor_init`: `/dev/wcnss_wlan` (Pronto firmware load), swappiness
+  (`proc_swappiness`), the modem gate; the `persistent` (FRP) node moved
+  to `ueventd.martini.rc`, as `chown` in an init script only changes the
+  by-name link;
+- `init.martini.wifi.sh` (`qti_init_shell`): the cfg file in
+  `/data/vendor/wifi` and the bind mounts over `/vendor/firmware`;
+- gralloc on `/dev/graphics/fb0`; `hci_qcomm_init` on the WCNSS
+  `smd_channel_ready` node;
+- `file_contexts` regexes for sysfs nodes whose path holds a device or bus
+  number known only on the phone (battery and charger supplies, RTC, light
+  sensor, touch attributes) and for the MDSS `lcd-backlight` LED, which
+  would otherwise be plain `sysfs` and not writable by the light HAL;
+- `sepolicy-swiftshader/` and `PRODUCT_REQUIRES_INSECURE_EXECMEM_FOR_SWIFTSHADER`
+  only in the `software` and `mdss` graphics modes (shader JIT).
+
+Checked offline: the vendor policy and the full policy compile with the
+SDK 30 tools of the build (`checkpolicy`, `secilc`), with no neverallow
+failure beyond those the userdebug tree already has, and `checkfc` accepts
+`file_contexts`. Never booted: collect `dmesg` and `logcat | grep avc`
+from a permissive boot before trying `fastboot boot` with an enforcing
+boot image. `init.martini.bootlog.sh` stays permissive on userdebug builds.
 
 ## TODO
 
@@ -248,6 +316,10 @@ To test on the phone:
   martini trees.
 - [TheMuppets](https://github.com/TheMuppets): `proprietary_vendor_oppo`
   (generic MSM8974 blobs).
+- LineageOS and the Code Aurora Forum: `packages/apps/FMRadio`,
+  `vendor/qcom/opensource/libfmjni` and `fm-commonsys`, whose FM start
+  sequence (`vendor.fm`, `vendor.hw.fm.*`, the CAF `init.qcom.fm.sh`)
+  `init.martini.fm.sh` follows; the radio-iris drivers of the kernel.
 - The Android Open Source Project: the Nexus 5 (hammerhead) power profile,
   the source of the CPU currents and placeholder values in
   `power_profile.xml`.
