@@ -1,0 +1,60 @@
+From 8e6073a44d3d635d0c2cc09d02560e4c20c56c2b Mon Sep 17 00:00:00 2001
+From: Lorenzo Giannoccaro <giannoccarol@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 19:57:22 +0100
+Subject: [PATCH] ims: do not override the final ImsFeature.initialize() on
+ Android 11
+
+ImsService calls initialize() itself right after createMmTelFeature() and
+the method is final on API 30, so the override made the class fail to load
+(LinkageError) as soon as the framework bound the service. Start the
+feature from onFeatureReady() or from the first subscription update after
+the context is set.
+---
+ app/src/main/java/me/phh/ims/PhhMmTelFeature.kt | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt b/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
+index 3a137eb..5be51ba 100644
+--- a/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
++++ b/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
+@@ -599,7 +599,7 @@ class PhhMmTelFeature(
+                 "newSubId=$subscriptionId handlerSubId=$sipHandlerSubId",
+         )
+ 
+-        if (!featureInitialized) {
++        if (!ensureInitialized("service subscription update")) {
+             Rlog.d(TAG, "$slotId deferring service subscription update until initialize")
+             return
+         }
+@@ -642,12 +642,17 @@ class PhhMmTelFeature(
+         }
+     }
+ 
+-    override fun initialize(context: Context?, slotId: Int) {
+-        super.initialize(context, slotId)
++    // ImsFeature.initialize() is final on Android 11 (ImsService calls it right after
++    // createMmTelFeature()), so it cannot be overridden: start the feature the first time
++    // the framework talks to it once the context is set.
++    private fun ensureInitialized(reason: String): Boolean {
++        if (featureInitialized) return true
++        if ((mContext as Context?) == null) return false
+ 
+         featureInitialized = true
+         featureState = STATE_INITIALIZING
+-        bindReadyCheckTelephonyManager("initialize")
++        bindReadyCheckTelephonyManager("initialize ($reason)")
++        return true
+     }
+ 
+     override fun createCallProfile(callSessionType: Int, callType: Int): ImsCallProfile {
+@@ -1080,6 +1085,7 @@ class PhhMmTelFeature(
+ 
+     override fun onFeatureReady() {
+         Rlog.d(TAG, "$slotId onFeatureReady")
++        ensureInitialized("onFeatureReady")
+ 
+         val subId = resolveSubIdForSlot()
+         if (!SubscriptionManager.isValidSubscriptionId(subId)) {
+-- 
+2.56.1
+

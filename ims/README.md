@@ -6,8 +6,9 @@ application processor by phh IMS, a userspace SIP/IMS stack that acts as the
 device MmTel `ImsService`. The voice is an AP VoIP stream
 (`config_use_voip_mode_for_ims`), not a modem voice session.
 
-Status: built, **not yet tried on a 930**. Same design as the working VoLTE
-of the Lumia 950 XL port (Android 16, Iliad Italy, 7/11/2026).
+Status: on a 930 (14/11/2026) the framework binds phh and the service runs;
+IMS registration and calls are not tried yet. Same design as the working
+VoLTE of the Lumia 950 XL port (Android 16, Iliad Italy, 7/11/2026).
 
 ## Pieces
 
@@ -52,7 +53,11 @@ is built in the LineageOS 23.2 tree of the 950 XL port, with
    - `0002`: Android 11 (API 30): per-slot `ImsService` entry points,
      subscription changes followed by the service, `PhoneStateListener`,
      registered PLMN from the operator numeric, Android 11 equivalents of
-     the Android 12-13 calls, build flags.
+     the Android 12-13 calls, build flags;
+   - `0003`: no override of `ImsFeature.initialize()`, which is final on
+     Android 11 (the class failed to load with a `LinkageError` as soon as
+     the framework bound the service); the feature starts from
+     `onFeatureReady()` or the first subscription update instead.
 2. build `PhhIms` in a LineageOS 21+ tree. The project builds it in the
    tree of the 950 XL port, next to that port's own PhhIms, so the modules
    get other names there (`build-env/build-phhims-a11.sh`, not part of this
@@ -61,7 +66,7 @@ is built in the LineageOS 23.2 tree of the 950 XL port, with
    `System.loadLibrary()` changed to match; nothing else differs.
 
 `prebuilt/PhhIms.apk`: krazey `a3fec01` + `patches/` (phh branch
-`martini-a11` @ `7d55254`), sha256 `4b54d568…`, `minSdkVersion` 30,
+`martini-a11` @ `8e6073a`), sha256 `6859af21…`, `minSdkVersion` 30,
 armeabi-v7a only.
 
 ## Trying it
@@ -71,7 +76,7 @@ After installing a build with these changes (no wipe needed):
 ```sh
 adb shell getprop vendor.radio.lumia_ims_profile      # done
 adb logcat -b main -s LumiaIMS LumiaRIL                # profile and P-CSCF
-adb shell cmd phone ims get-ims-service -s 0           # me.phh.ims
+adb shell cmd phone ims get-ims-service -d -s 0 -f 1   # me.phh.ims
 adb logcat | grep -E 'PHH|SipHandler|ImsResolver|IpSec'
 adb shell dumpsys telephony_ims | grep -i registr
 ```
