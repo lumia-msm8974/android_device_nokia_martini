@@ -8,16 +8,16 @@
 # installed by MARTINI_SENSORS_SSC=true builds (device.mk). sensors.qcom
 # (service "sensors", init.martini.qcom.rc) serves the sensors registry to
 # the ADSP, built from /etc/sensor_def_qcomdev.conf into
-# /data/misc/sensors/sns.reg, and the Sensor1 API to sensors.msm8974, the
-# second sub-HAL of /vendor/etc/sensors/hals.conf.
+# /data/misc/sensors/sns.reg, and the Sensor1 API to sensors.msm8974, loaded
+# through sensors.martini_ssc, the second sub-HAL of
+# /vendor/etc/sensors/hals.conf.
 #
-# persist.vendor.martini.ssc (0 by default, from the vendor build.prop; 1 crashed
-# system_server on an RM-1045, see device.mk):
-#   1  sensors.qcom starts; HALs sensors.martini and sensors.msm8974
-#   0  sensors.qcom stays off; HAL sensors.martini only, as in the builds
-#      without the flag (hals-martini.conf bound over hals.conf). Rollback
-#      without reflashing: setprop persist.vendor.martini.ssc 0, reboot.
-#      "start sensors" still runs the daemon by hand for tests.
+# persist.vendor.martini.ssc (1 by default, from the vendor build.prop):
+#   1  sensors.qcom starts; HALs sensors.martini and sensors.martini_ssc
+#   0  sensors.qcom stays off; HAL sensors.martini only (hals-martini.conf
+#      bound over hals.conf). Rollback without reflashing:
+#      setprop persist.vendor.martini.ssc 0, reboot. "start sensors" still
+#      runs the daemon by hand for tests.
 
 on post-fs-data
     mkdir /data/misc/sensors 0775 system system
@@ -28,5 +28,8 @@ on post-fs-data
 on property:persist.vendor.martini.ssc=0
     mount none /vendor/etc/sensors/hals-martini.conf /vendor/etc/sensors/hals.conf bind
 
-on zygote-start && property:persist.vendor.martini.ssc=1
+# Not before "boot": the ADSP is loaded at early-boot (init.martini.qcom.rc,
+# /sys/kernel/boot_adsp/boot), and with sensors.qcom already running at
+# zygote-start it failed to come out of reset.
+on boot && property:persist.vendor.martini.ssc=1
     start sensors

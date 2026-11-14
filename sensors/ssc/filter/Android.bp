@@ -1,0 +1,17 @@
+//
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// Sub-HAL of the 1.0 multihal (vendor/etc/sensors/hals.conf) in front of
+// the Qualcomm sensors.msm8974: only its physical sensors are listed.
+cc_library_shared {
+    name: "sensors.martini_ssc",
+    relative_install_path: "hw",
+    vendor: true,
+    srcs: ["sensors_filter.c"],
+    shared_libs: ["libdl", "liblog"],
+    header_libs: ["libhardware_headers"],
+    cflags: ["-Wall", "-Werror"],
+}

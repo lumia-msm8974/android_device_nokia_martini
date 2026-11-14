@@ -405,16 +405,17 @@ PRODUCT_PACKAGES += \
 
 # Accelerometer, gyroscope and magnetometer sit behind the Qualcomm Sensor
 # Core on the ADSP (ACPI \_SB.SEN1, QCOM2495), as on Windows Phone.
-# MARTINI_SENSORS_SSC=true adds that stack (sensors/ssc/): the registry of
-# the 930 for sensors.qcom (sensor_def_qcomdev.conf, from the Windows
-# qcSensors settings), the daemon start, and the multihal config of the 1.0
-# impl (vendor/etc/sensors/hals.conf), which loads sensors.martini and the
-# Qualcomm sensors.msm8974 HAL side by side. Blobs: msm8974-common.
-# Built but off by default: on the first real RM-1045 (13/11/2026) the
-# sensors.msm8974 HAL crashed in Sensor::getAttribOK() from poll(), inside
-# system_server, every 10 s, and Android never left the boot animation.
-# To try it on a phone: setprop persist.vendor.martini.ssc 1 and reboot
-# (init.martini.ssc.rc); MARTINI_SENSORS_SSC=false builds without it.
+# MARTINI_SENSORS_SSC=true adds that stack (sensors/ssc/): the sensors
+# registry of the 930 for sensors.qcom (sensor_def_qcomdev.conf), the daemon
+# start, and the multihal config of the 1.0 impl (vendor/etc/sensors/
+# hals.conf), which loads sensors.martini and sensors.martini_ssc side by
+# side. sensors.martini_ssc (sensors/ssc/filter/) lists only the physical
+# sensors of the Qualcomm sensors.msm8974 HAL and loads it once sensors.qcom
+# serves its socket: opened earlier, that HAL lists no sensor and crashes
+# system_server in poll(). sensors.qcom starts on "boot", after the ADSP is
+# loaded at early-boot: started at zygote-start it made the ADSP fail to come
+# out of reset (no audio, no sensors). Blobs: msm8974-common.
+# Rollback without reflashing: setprop persist.vendor.martini.ssc 0, reboot.
 # No step counter/detector: on Windows they are Nokia ADSP algorithms
 # (SSC_NOKIA_*) that the Qualcomm HAL cannot reach.
 MARTINI_SENSORS_SSC ?= true
@@ -429,12 +430,15 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
     frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml
 
+PRODUCT_PACKAGES += \
+    sensors.martini_ssc
+
 # Only the physical sensors from sensors.msm8974: its SAM algorithm
 # sensors need ADSP services that the Windows image does not publish (the
 # framework builds rotation vector, game and geomagnetic rotation vector
 # from the physical ones). The wake-up copies are left out as well.
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.vendor.martini.ssc=0 \
+    persist.vendor.martini.ssc=1 \
     ro.qti.sdk.sensors.gestures=false \
     ro.qti.sensors.amd=false \
     ro.qti.sensors.cmc=false \
