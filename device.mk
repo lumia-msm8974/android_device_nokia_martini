@@ -378,6 +378,14 @@ PRODUCT_PACKAGES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.martini.cpubw_hwmon=1
 
+# Screen-off power without system suspend (lumia_screenoff kernel switches,
+# init.martini.power.rc): handoff vote groups dropped while the screen is off.
+# 0x29 = bus + Krait rails + MMSS, measured on the 930: 235 -> 159 mA.
+# Never 0x04 (GPU/OCMEM): it hangs the ADSP. 0x40 is untested.
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.vendor.martini.screenoff_groups=0x29 \
+    persist.vendor.martini.screenoff_max_khz=0
+
 # Rootdir
 PRODUCT_PACKAGES += \
     fstab.martini \

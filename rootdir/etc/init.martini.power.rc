@@ -136,3 +136,15 @@ on property:sys.boot_completed=1 && property:persist.vendor.martini.cpubw_hwmon=
 on property:dev.bootcomplete=1
     setprop sys.io.scheduler "bfq"
     setprop vendor.post_boot.parsed 1
+
+# Screen-off power without system suspend (kernel lumia_screenoff): while fb0
+# is powered down the kernel drops the selected groups of firmware handoff
+# votes (BIMC/NoC clocks held at maximum, Krait rails at their top level,
+# MMSS clocks) and gives them back when the screen turns on. 0 = off.
+# Groups: 0x01 bus, 0x02 qdss, 0x04 gpu/ocmem, 0x08 mmss, 0x10 vdd_dig,
+# 0x20 krait, 0x40 other GCC clocks. setprop applies a new value at once.
+on property:sys.boot_completed=1 && property:persist.vendor.martini.screenoff_groups=*
+    write /sys/module/lumia_screenoff/parameters/groups ${persist.vendor.martini.screenoff_groups}
+
+on property:sys.boot_completed=1 && property:persist.vendor.martini.screenoff_max_khz=*
+    write /sys/module/lumia_screenoff/parameters/max_freq ${persist.vendor.martini.screenoff_max_khz}
