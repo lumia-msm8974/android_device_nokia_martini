@@ -48,10 +48,3 @@ service vendor.martini_bootlog /vendor/bin/init.martini.bootlog.sh
 on post-fs-data && property:persist.vendor.martini.bootlog=1
     mkdir /data/vendor/bootlog 0750 root root
     start vendor.martini_bootlog
-
-# HWUI partial redraw (buffer age). msm8974-common turns it off for the
-# Adreno 330; on these phones the shade and the launcher render correctly
-# with it and redraw less (notification shade 90th percentile 30 -> 26 ms
-# measured on the 930). Set before zygote and the apps start.
-on post-fs-data
-    setprop debug.hwui.use_buffer_age true
