@@ -17,12 +17,12 @@
          digital mics)
        - loudspeaker: SEC_MI2S_RX (ACDB 70), not a codec output; see the
          "sec-mi2s" paths and the "spk" path
-     The stock DMIC names do not follow the codec numbering: on the 1520 the
-     handset mic measured on DMIC3 (DMIC3 -50 dBFS, DMIC4 -66, DMIC1 -74,
-     DMIC2 and DMIC5/6 silent with speech held as in a call). The 930 runs
-     the same driver and tables, so it gets the same inputs: main DMIC3,
-     speakerphone DMIC4, second mic of the dual-mic paths DMIC1. To check on
-     the phone (see DEVICE-MARTINI.md, "Audio").
+     The 930 microphones are not those of the 1520: measured on an RM-1045
+     (14/11/2026) with speech held as in a call, 3 s per codec DMIC at 0 dB:
+     DMIC2 -73 dBFS RMS (peak -47), DMIC1 -80 (peak -63), DMIC3/DMIC4 only
+     noise (-96), DMIC5/DMIC6 zero. Main and speakerphone mic DMIC2, second
+     mic of the dual-mic paths DMIC1, both with +12 dB of decimator gain
+     (DEC Volume 96, 84 = 0 dB).
 
      Vibra: the 930 drives its motor through the codec (stock
      hwnvibraaudiocodec); "vibra-lineout" is a test path for that route,
@@ -906,21 +906,19 @@
         <ctl name="IIR1 INP1 MUX" value="DEC5" />
     </path>
 
-    <!-- Main mic: DMIC3 (stock HANDSET_MIC, ACDB 4, path DMIC_1). Measured
-         on the 1520 with speech held as in a call: DMIC3 about -50 dBFS,
-         DMIC4 -66, DMIC1 -74, DMIC2 silent. -->
+    <!-- Main mic: DMIC2 (stock HANDSET_MIC, ACDB 4), the loudest with speech
+         held as in a call -->
     <path name="main-mic">
         <ctl name="AIF1_CAP Mixer SLIM TX7" value="1"/>
-        <ctl name="SLIM TX7 MUX" value="DEC3" />
-        <ctl name="DEC3 MUX" value="DMIC3" />
-        <ctl name="DEC3 Volume" value="84" />
+        <ctl name="SLIM TX7 MUX" value="DEC2" />
+        <ctl name="DEC2 MUX" value="DMIC2" />
+        <ctl name="DEC2 Volume" value="96" />
     </path>
 
-    <!-- speakerphone mic (SPKR_PHONE_MIC, stock DMIC_4: codec DMIC4, live
-         on the 1520) -->
+    <!-- Second mic: DMIC1, 7 dB below DMIC2 with speech held as in a call -->
     <path name="anc-mic">
-        <ctl name="DEC4 MUX" value="DMIC4" />
-        <ctl name="DEC4 Volume" value="84" />
+        <ctl name="DEC1 MUX" value="DMIC1" />
+        <ctl name="DEC1 Volume" value="96" />
     </path>
 
 
@@ -930,11 +928,11 @@
         <ctl name="SLIM_0_TX Channels" value="One" />
     </path>
 
+    <!-- Speakerphone: the main mic as well (DMIC3/DMIC4, the 1520 choices,
+         are silent on the 930) -->
     <path name="speaker-mic">
-        <ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
+        <path name="main-mic" />
         <ctl name="SLIM_0_TX Channels" value="One" />
-        <ctl name="SLIM TX7 MUX" value="DEC4" />
-        <path name="anc-mic" />
     </path>
 
     <path name="headset-mic">
@@ -995,19 +993,17 @@
     </path>
 
     <!-- Dual-mic recording -->
-    <!-- Two mics: main DMIC3 + DMIC1. The stock endfire pair DMIC_2_4
-         would take DMIC2, silent on the 1520; DMIC1 is the live mic
-         farthest from the mouth there (-74 dBFS against -50 for DMIC3). -->
+    <!-- Two mics: main DMIC2 + second DMIC1, the only live ones -->
     <path name="handset-dmic">
         <ctl name="AIF1_CAP Mixer SLIM TX7" value="1" />
         <ctl name="AIF1_CAP Mixer SLIM TX8" value="1" />
         <ctl name="SLIM_0_TX Channels" value="Two" />
-        <ctl name="SLIM TX7 MUX" value="DEC3" />
-        <ctl name="DEC3 MUX" value="DMIC3" />
-        <ctl name="DEC3 Volume" value="84" />
+        <ctl name="SLIM TX7 MUX" value="DEC2" />
+        <ctl name="DEC2 MUX" value="DMIC2" />
+        <ctl name="DEC2 Volume" value="96" />
         <ctl name="SLIM TX8 MUX" value="DEC1" />
         <ctl name="DEC1 MUX" value="DMIC1" />
-        <ctl name="DEC1 Volume" value="84" />
+        <ctl name="DEC1 Volume" value="96" />
     </path>
 
     <path name="dmic-endfire">
@@ -1083,10 +1079,10 @@
     </path>
 
 
-    <!-- MAD on the handset mic (DMIC3) -->
+    <!-- MAD on the handset mic (DMIC2) -->
     <path name="listen-handset-mic">
         <ctl name="MADONOFF Switch" value="1" />
-        <ctl name="MAD Input" value="DMIC3" />
+        <ctl name="MAD Input" value="DMIC2" />
     </path>
 
     <!-- Vibra through the codec, for manual tests: the vibrator HAL
