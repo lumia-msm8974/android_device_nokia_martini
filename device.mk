@@ -105,7 +105,8 @@ PRODUCT_PACKAGES += \
     libmmcamera_skyphd \
     libactuator_karma \
     libactuator_karma_camera \
-    libactuator_karma_camcorder
+    libactuator_karma_camcorder \
+    libsensor1shim
 
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.camera.isp.dualisp=1

@@ -302,6 +302,9 @@ service wcnss-service /vendor/bin/wcnss_service
 # cameraserver connects to its socket in /data/misc/camera.
 service qcamerasvr /vendor/bin/mm-qcamera-daemon
     class late_start
+    # Fail the gyro module's SSC connection at once while SSC is off
+    # (libshims/sensor1shim.c): it otherwise waits 3 s at every open.
+    setenv LD_PRELOAD /vendor/lib/libsensor1shim.so
     user camera
     group camera system inet input graphics
 
