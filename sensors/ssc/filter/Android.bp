@@ -10,8 +10,11 @@ cc_library_shared {
     name: "sensors.martini_ssc",
     relative_install_path: "hw",
     vendor: true,
-    srcs: ["sensors_filter.c"],
-    shared_libs: ["libdl", "liblog"],
+    srcs: [
+        "calib.c",
+        "sensors_filter.c",
+    ],
+    shared_libs: ["libcutils", "libdl", "liblog"],
     header_libs: ["libhardware_headers"],
     cflags: ["-Wall", "-Werror"],
 }

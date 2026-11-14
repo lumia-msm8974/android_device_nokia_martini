@@ -21,9 +21,15 @@
  * daemon's own start-up timeouts, before loading the Qualcomm HAL, and do
  * not open it if the socket never comes or no physical sensor is listed:
  * the multihal then skips this sub-HAL.
+ *
+ * The device handed to the multihal wraps the Qualcomm one, so that poll()
+ * can run the gyroscope and magnetometer calibration of calib.c on the
+ * events (this HAL reports both sensors raw).
  */
 
 #define LOG_TAG "sensors.martini_ssc"
+
+#include "calib.h"
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -32,6 +38,7 @@
 #include <hardware/sensors.h>
 #include <log/log.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define QCOM_HAL "/vendor/lib/hw/sensors.msm8974.so"
@@ -131,13 +138,108 @@ static int get_sensors_list(struct sensors_module_t *module, struct sensor_t con
 	return count;
 }
 
+/* Device wrapper: every call goes to the Qualcomm device, poll() also calibrates. */
+struct wrapper {
+	struct sensors_poll_device_1 dev;	/* must stay first */
+	struct sensors_poll_device_1 *inner;
+};
+
+static struct sensors_poll_device_1 *inner_of(const void *dev)
+{
+	return ((const struct wrapper *)dev)->inner;
+}
+
+static int w_activate(struct sensors_poll_device_t *dev, int handle, int enabled)
+{
+	struct sensors_poll_device_1 *in = inner_of(dev);
+
+	return in->activate((struct sensors_poll_device_t *)in, handle, enabled);
+}
+
+static int w_set_delay(struct sensors_poll_device_t *dev, int handle, int64_t ns)
+{
+	struct sensors_poll_device_1 *in = inner_of(dev);
+
+	return in->setDelay((struct sensors_poll_device_t *)in, handle, ns);
+}
+
+static int w_poll(struct sensors_poll_device_t *dev, sensors_event_t *data, int n)
+{
+	struct sensors_poll_device_1 *in = inner_of(dev);
+	int got = in->poll((struct sensors_poll_device_t *)in, data, n);
+
+	for (int i = 0; i < got; i++)
+		calib_event(&data[i]);
+	return got;
+}
+
+static int w_batch(struct sensors_poll_device_1 *dev, int handle, int flags,
+		   int64_t period_ns, int64_t timeout)
+{
+	struct sensors_poll_device_1 *in = inner_of(dev);
+
+	return in->batch(in, handle, flags, period_ns, timeout);
+}
+
+static int w_flush(struct sensors_poll_device_1 *dev, int handle)
+{
+	struct sensors_poll_device_1 *in = inner_of(dev);
+
+	return in->flush(in, handle);
+}
+
+static int w_inject(struct sensors_poll_device_1 *dev, const sensors_event_t *data)
+{
+	struct sensors_poll_device_1 *in = inner_of(dev);
+
+	return in->inject_sensor_data(in, data);
+}
+
+static int w_close(struct hw_device_t *dev)
+{
+	struct wrapper *w = (struct wrapper *)dev;
+	int rc = w->inner->common.close(&w->inner->common);
+
+	free(w);
+	return rc;
+}
+
 static int open_sensors(const struct hw_module_t *module, const char *id, struct hw_device_t **dev)
 {
-	(void)module;
+	struct hw_device_t *in_dev;
+	struct sensors_poll_device_1 *in;
+	struct wrapper *w;
+	int rc;
+
 	pthread_once(&once, load);
 	if (!qcom)
 		return -ENODEV;
-	return qcom->common.methods->open(&qcom->common, id, dev);
+	rc = qcom->common.methods->open(&qcom->common, id, &in_dev);
+	if (rc)
+		return rc;
+	in = (struct sensors_poll_device_1 *)in_dev;
+	w = calloc(1, sizeof(*w));
+	if (!w) {
+		in_dev->close(in_dev);
+		return -ENOMEM;
+	}
+	w->inner = in;
+	w->dev.common = in->common;
+	w->dev.common.module = (struct hw_module_t *)module;
+	w->dev.common.close = w_close;
+	w->dev.activate = w_activate;
+	w->dev.setDelay = w_set_delay;
+	w->dev.poll = w_poll;
+	if (in->common.version >= SENSORS_DEVICE_API_VERSION_1_0) {
+		w->dev.batch = in->batch ? w_batch : NULL;
+		w->dev.flush = in->flush ? w_flush : NULL;
+	}
+	/* inject_sensor_data exists from 1.4 on: the Qualcomm device (1.3) ends before it */
+	if (in->common.version >= SENSORS_DEVICE_API_VERSION_1_4)
+		w->dev.inject_sensor_data = in->inject_sensor_data ? w_inject : NULL;
+	calib_init();
+	*dev = &w->dev.common;
+	return 0;
 }
 
 static int set_operation_mode(unsigned int mode)
