@@ -1,0 +1,29 @@
+//
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// Vibrator HAL for the motor driven from the audio codec: the motor driver
+// takes its input from LINEOUT2/LINEOUT4 of the WCD9320, its enable line is
+// PM8941 GPIO 8 (raised through timed_output/vibrator).
+cc_binary {
+    name: "android.hardware.vibrator@1.0-service.martini",
+    init_rc: ["android.hardware.vibrator@1.0-service.martini.rc"],
+    defaults: ["hidl_defaults"],
+    relative_install_path: "hw",
+    vendor: true,
+    srcs: [
+        "Vibrator.cpp",
+        "service.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.vibrator@1.0",
+        "libbase",
+        "libcutils",
+        "libhidlbase",
+        "liblog",
+        "libtinyalsa",
+        "libutils",
+    ],
+}

@@ -475,14 +475,14 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service.basic
 
-# Vibrator: PM8941 vibration motor (timed_output/vibrator, kernel
-# qcom,vibrator@c000; on the 930 its enable line is GPIO8, set up by the
-# kernel DT), driven by vibrator.default through the 1.0 HAL.
-# The HAL must only be declared while that device exists: a failing
+# Vibrator: the motor driver takes its input from LINEOUT2/LINEOUT4 of the
+# codec and is enabled by PM8941 GPIO 8, raised through the timed_output
+# vibrator of the kernel (qcom,vibrator@c000). The HAL in vibrator/ plays the
+# drive waveform on MultiMedia9 for the length of each vibration.
+# The HAL must only be declared while timed_output/vibrator exists: a failing
 # vibrator HAL blocks system_server in VibratorService.vibratorInit.
 PRODUCT_PACKAGES += \
-    android.hardware.vibrator@1.0-impl \
-    android.hardware.vibrator@1.0-service
+    android.hardware.vibrator@1.0-service.martini
 
 # VNDK
 PRODUCT_COPY_FILES += \

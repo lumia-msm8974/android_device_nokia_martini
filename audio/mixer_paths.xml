@@ -1089,19 +1089,17 @@
         <ctl name="MAD Input" value="DMIC3" />
     </path>
 
-    <!-- Vibra through the codec, test only (not a HAL device). The stock
-         930 firmware drives the motor from the codec (hwnvibraaudiocodec,
-         ACPI NOKIA_VIBRA with PM8941 GPIO 8 as its only resource); the
-         LineageOS 17.1 port of 2314372037 fed the motor driver ("N2183")
-         from the LINEOUT2/LINEOUT4 differential pair: RX5 to LINEOUT2 and,
-         inverted through RDAC7, to LINEOUT4. The driver also needs GPIO 8
-         high (today driven by the PMIC vibrator). Test with tinyplay on
-         MultiMedia1 while the vibrator is enabled. -->
+    <!-- Vibra through the codec, for manual tests: the vibrator HAL
+         (vibrator/) sets the same route itself. The motor driver ("N2183",
+         enabled by PM8941 GPIO 8) takes LINEOUT2/LINEOUT4 as a differential
+         pair: RX5 to LINEOUT2 and, inverted through RDAC7, to LINEOUT4. The
+         route of the LineageOS 17.1 port of 2314372037. Test with tinyplay
+         on PCM 35 (MultiMedia9) while timed_output/vibrator is enabled. -->
     <path name="vibra-lineout">
-        <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia1" value="1" />
+        <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia9" value="1" />
         <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
-        <ctl name="SLIM_0_RX Channels" value="One" />
         <ctl name="RX5 MIX1 INP1" value="RX1" />
+        <ctl name="RX5 HPF Switch" value="1" />
         <ctl name="RDAC7 MUX" value="DEM5_INV" />
         <ctl name="RX5 Digital Volume" value="84" />
         <ctl name="LINEOUT2 Volume" value="12" />
