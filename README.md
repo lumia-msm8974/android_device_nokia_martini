@@ -15,7 +15,8 @@ ever run on a Lumia 930. Nothing here is verified on the hardware.
 | Touch | Synaptics RMI4, BLSP1 I2C2 0x4b, IRQ GPIO61 |
 | Sensors | APDS-9930 light/proximity (BLSP1 I2C3 0x39, application processor); accelerometer (0x1e), magnetometer (0x0f) and gyroscope (0x68) on BLSP2 QUP6 behind the ADSP Sensor Core |
 | Battery | BV-5QW, 2420 mAh (2500 mAh in some sources), Qi wireless charging |
-| Cameras | 20 MP PureView rear (ACPI QCOM2436), 1.2 MP front (QCOM2437): not supported |
+| Cameras | 20 MP PureView rear (Karma module, OIS, focus, LED flash), 1.2 MP front: both work with the msm8974-common QCamera2 HAL and the plug-ins in `camera-sensors/` (camera control interface at 400 kHz) |
+| Vibrator | motor driver fed from LINEOUT2/LINEOUT4 of the codec, enabled by PM8941 GPIO 8: driven by the HAL in `vibrator/` |
 | Keys | volume up (PM8941 GPIO5), volume down (RESIN), camera focus/shutter (PM8941 GPIO4/3), power; on-screen navigation |
 | Variants | RM-1045 (RM-1087 reported, unverified) |
 
@@ -276,10 +277,12 @@ Still open:
       take the registry of `sensors.qcom`, and are the axes right
       (`sensors/ssc/`, on by default, `persist.vendor.martini.ssc 0` to turn it off)?
 - [ ] product code(s) of the phone (RM-1045, RM-1087) for the OTA assert;
-- [ ] audio: which DMIC is which on the 930 (1520 inputs assumed); vibrator:
-      Windows drives it through the audio codec (`hwnvibraaudiocodec`), the
-      PMIC vibrator with the GPIO 8 enable is what the 17.1 port uses; the
-      codec route is the `vibra-lineout` test path.
+- [ ] audio: which DMIC is which on the 930 (1520 inputs assumed);
+- [ ] vibrator: a vibration during a call also reaches the earpiece path
+      (MultiMedia9 shares SLIMBUS_0_RX); a separate back end needs a kernel
+      change;
+- [ ] camera: a flash capture with the lens covered never leaves the
+      preflash estimation and keeps the LED on until the daemon restarts.
 
 To extract from the 930 Windows firmware (FFU or the phone's MainOS):
 
@@ -304,7 +307,7 @@ To test on the phone:
 - [ ] NFC (PN544 with the 930 EEPROM settings, SIM card emulation);
 - [ ] Wi-Fi, Bluetooth, modem (UIM bootstrap, SIM, data, calls), GPS;
 - [ ] audio routes (speaker, earpiece, headset, microphones);
-- [ ] battery and Qi charging (power supply sysfs paths), vibrator;
+- [ ] battery and Qi charging (power supply sysfs paths);
 - [ ] installer partition layout against the 930 GPT (unique names: no
       second `userdata`).
 
