@@ -14,3 +14,26 @@ cc_binary {
     shared_libs: ["libdl", "liblog"],
     init_rc: ["lumia-uim-bootstrap.rc"],
 }
+
+// Sets the modem's "ims" profiles to IPv4v6 with the P-CSCF asked in the
+// PCO, for the IMS APN of phh IMS (see lumia-ims-profile.c).
+cc_binary {
+    name: "lumia-ims-profile",
+    vendor: true,
+    srcs: ["lumia-ims-profile.c"],
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+    shared_libs: ["libdl", "liblog"],
+    init_rc: ["lumia-ims-profile.rc"],
+}
+
+// rild loads this wrapper instead of qcril (vendor.rild.libpath): it fills
+// the P-CSCF list of the data calls, which qcril never reports
+// (see lumia-ril-pcscf.c).
+cc_library_shared {
+    name: "libril-lumia-pcscf",
+    vendor: true,
+    srcs: ["lumia-ril-pcscf.c"],
+    cflags: ["-Wall", "-Wextra", "-Werror"],
+    header_libs: ["ril_headers"],
+    shared_libs: ["libdl", "liblog"],
+}

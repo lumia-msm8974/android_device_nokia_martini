@@ -22,6 +22,9 @@
 # SIM bootstrap helper (ril/lumia-uim-bootstrap.c)
 /(vendor|system/vendor)/bin/lumia-uim-bootstrap         u:object_r:lumia_uim_bootstrap_exec:s0
 
+# IMS profile helper (ril/lumia-ims-profile.c)
+/(vendor|system/vendor)/bin/lumia-ims-profile          u:object_r:lumia_ims_profile_exec:s0
+
 # sysfs nodes whose path depends on bus or device numbers known only on the
 # phone. ueventd relabels /sys/devices from these entries at cold boot,
 # before the HALs start; the genfs_contexts entries for the 1520 numbers

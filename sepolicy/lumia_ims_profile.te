@@ -1,0 +1,16 @@
+# ril/lumia-ims-profile: sets the modem's "ims" data profiles to IPv4v6 with
+# the P-CSCF asked in the PCO, through qmuxd (libqmi_cci). Started by init as
+# radio when qmuxd runs, and again on vendor.radio.lumia_ims_profile=retry
+# (set by the RIL wrapper, rild domain).
+type lumia_ims_profile, domain;
+type lumia_ims_profile_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(lumia_ims_profile)
+
+# QMI through qmuxd (/dev/socket/qmux_radio) and the IPC router sockets
+qmux_socket(lumia_ims_profile)
+allow lumia_ims_profile self:socket create_socket_perms;
+allowxperm lumia_ims_profile self:socket ioctl msm_sock_ipc_ioctls;
+
+# vendor.radio.lumia_ims_profile=done
+set_prop(lumia_ims_profile, radio_prop)

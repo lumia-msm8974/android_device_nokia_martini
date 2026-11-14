@@ -1,0 +1,16 @@
+# One-shot: set the modem's "ims" 3GPP profiles to IPv4v6 with the P-CSCF
+# asked in the PCO, so that rild's profile lookup accepts Android's IMS APN
+# and the network returns the proxy. Talks only to qmuxd (radio group).
+service lumia-ims-profile /vendor/bin/lumia-ims-profile
+    class main
+    user radio
+    group radio log
+    oneshot
+    disabled
+
+on property:init.svc.qmuxd=running
+    start lumia-ims-profile
+
+# The RIL wrapper (libril-lumia-pcscf) saw an "ims" call without a P-CSCF.
+on property:vendor.radio.lumia_ims_profile=retry
+    start lumia-ims-profile
