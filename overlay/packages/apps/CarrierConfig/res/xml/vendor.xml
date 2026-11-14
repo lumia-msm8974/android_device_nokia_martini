@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+
+     SPDX-License-Identifier: Apache-2.0
+
+     Vendor carrier configuration, read after the carrier files of
+     CarrierConfig: explicit MCC/MNC filters.
+-->
+<carrier_config_list>
+    <!-- Iliad Italia: VoLTE through phh IMS (IMS APN "ims", IPv6, from
+         apns-conf). SMS and supplementary services stay on CS, as in Google's
+         carrier settings for iliad_it (no SMS over IMS, no XCAP/Ut). -->
+    <carrier_config mcc="222" mnc="50">
+        <boolean name="carrier_volte_available_bool" value="true" />
+        <boolean name="carrier_volte_provisioning_required_bool" value="false" />
+        <boolean name="editable_enhanced_4g_lte_bool" value="true" />
+        <boolean name="hide_enhanced_4g_lte_bool" value="false" />
+        <boolean name="enhanced_4g_lte_on_by_default_bool" value="true" />
+        <boolean name="carrier_vt_available_bool" value="false" />
+        <boolean name="carrier_wfc_ims_available_bool" value="false" />
+        <boolean name="carrier_supports_ss_over_ut_bool" value="false" />
+        <boolean name="imssms.sms_over_ims_supported_bool" value="false" />
+    </carrier_config>
+</carrier_config_list>

@@ -1,0 +1,545 @@
+From 7d55254a588a57d2fbbb15944223da8d1ee05cb2 Mon Sep 17 00:00:00 2001
+From: Lorenzo Giannoccaro <giannoccarol@users.noreply.github.com>
+Date: Sat, 14 Nov 2026 18:03:20 +0100
+Subject: [PATCH 2/2] ims: run on Android 11
+
+Port the stack to API 30 for the Lumia 930 (LineageOS 18.1):
+
+- ImsService: implement the per-slot createMmTelFeature(), getConfig()
+  and getRegistration() that Android 11 calls, and follow subscription
+  changes with an OnSubscriptionsChangedListener, since Android 11 never
+  passes the subscription to the service.
+- Ready check: PhoneStateListener instead of TelephonyCallback before
+  Android 12.
+- Registered PLMN: fall back to the operator numeric of the service
+  state when the legacy RIL reports a cell identity without MCC/MNC.
+- Replace the Android 12-13 calls with their Android 11 equivalents:
+  callSessionInitiatedFailed(), NetworkRegistrationInfo.isRegistered(),
+  SmsManager.getSmsManagerForSubscriptionId(), SubscriptionManager
+  getSubId(); skip clearCommunicationDevice() and the exact alarm check.
+- Build: min_sdk_version 30, 32-bit JNI libraries linked against the NDK
+  (sdk_version 30, static libc++).
+---
+ Android.bp                                    |   4 +
+ app/jni/Android.bp                            |   6 +
+ app/src/main/java/me/phh/ims/PhhImsService.kt |  68 ++++++++++-
+ .../main/java/me/phh/ims/PhhMmTelFeature.kt   | 109 +++++++++++++-----
+ .../main/java/me/phh/sip/PlatformCompat.kt    |  65 +++++++++++
+ .../me/phh/sip/SipAccessNetworkHeaders.kt     |   2 +-
+ .../java/me/phh/sip/SipAudioModeRestorer.kt   |   3 +-
+ app/src/main/java/me/phh/sip/SipHandler.kt    |   6 +-
+ app/src/main/java/me/phh/sip/SipSmsHandler.kt |   2 +-
+ 9 files changed, 229 insertions(+), 36 deletions(-)
+ create mode 100644 app/src/main/java/me/phh/sip/PlatformCompat.kt
+
+diff --git a/Android.bp b/Android.bp
+index 83f8218..c2c4694 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -15,6 +15,10 @@ android_app {
+     certificate: "platform",
+     privileged: true,
+     platform_apis: true,
++    // Android 11 (Lumia 930 port): runs from API 30, with the 32-bit JNI
++    // libraries of the ARMv7 phones.
++    min_sdk_version: "30",
++    compile_multilib: "32",
+ 
+     static_libs: [
+         "kotlin-stdlib",
+diff --git a/app/jni/Android.bp b/app/jni/Android.bp
+index 91cbd74..366caf2 100644
+--- a/app/jni/Android.bp
++++ b/app/jni/Android.bp
+@@ -2,6 +2,9 @@
+ 
+ cc_library_shared {
+     name: "librnnoise_jni",
++    // NDK libraries: the APK runs on Android 11 too
++    sdk_version: "30",
++    stl: "c++_static",
+     srcs: [
+         "rnnoise_jni.c",
+         "rnnoise/src/denoise.c",
+@@ -58,6 +61,9 @@ filegroup {
+ 
+ cc_library_shared {
+     name: "libwebrtc_aec_jni",
++    // NDK libraries: the APK runs on Android 11 too
++    sdk_version: "30",
++    stl: "c++_static",
+     srcs: [
+         "webrtc_aec_jni.cpp",
+         ":phhims_webrtc_aec3_sources",
+diff --git a/app/src/main/java/me/phh/ims/PhhImsService.kt b/app/src/main/java/me/phh/ims/PhhImsService.kt
+index 228b9a7..140a32e 100644
+--- a/app/src/main/java/me/phh/ims/PhhImsService.kt
++++ b/app/src/main/java/me/phh/ims/PhhImsService.kt
+@@ -7,13 +7,17 @@ import android.content.Context
+ import android.content.Intent
+ import android.content.IntentFilter
+ import android.os.Binder
++import android.os.Build
+ import android.os.SystemClock
+ import android.telephony.Rlog
++import android.telephony.SubscriptionManager
+ import android.telephony.ims.ImsService
+ import android.telephony.ims.feature.MmTelFeature
+ import android.telephony.ims.feature.RcsFeature
+ import android.telephony.ims.stub.ImsConfigImplBase
+ import android.telephony.ims.stub.ImsRegistrationImplBase
++import me.phh.sip.phhAtLeastS
++import me.phh.sip.phhSubscriptionIdForSlot
+ 
+ class PhhImsService : ImsService() {
+     companion object {
+@@ -32,6 +36,11 @@ class PhhImsService : ImsService() {
+     private val configsBySlot = mutableMapOf<Int, PhhImsConfig>()
+     private val imsRegistrationsBySlot = mutableMapOf<Int, ImsRegistrationImplBase>()
+ 
++    // Android 11 binds the ImsService per slot and never tells it when the
++    // subscription of a slot changes: follow the subscriptions here.
++    private val subIdsBySlot = mutableMapOf<Int, Int>()
++    private var subscriptionsListener: SubscriptionManager.OnSubscriptionsChangedListener? = null
++
+     override fun onCreate() {
+         super.onCreate()
+         Rlog.d(TAG, "onCreate")
+@@ -42,6 +51,31 @@ class PhhImsService : ImsService() {
+         registerReceiver(receiver, intentFilter, Context.RECEIVER_NOT_EXPORTED)
+         receiverRegistered = true
+         armPeriodicRegisterAlarm()
++        if (!phhAtLeastS) followSubscriptions()
++    }
++
++    private fun followSubscriptions() {
++        val listener = object : SubscriptionManager.OnSubscriptionsChangedListener() {
++            override fun onSubscriptionsChanged() {
++                val slots = synchronized(stateLock) { mmTelFeaturesBySlot.keys.toList() }
++                slots.forEach { slotId ->
++                    val subId = phhSubscriptionIdForSlot(slotId)
++                    val changed = synchronized(stateLock) {
++                        subIdsBySlot.put(slotId, subId) != subId
++                    }
++                    if (changed) {
++                        notifyFeatureSubscriptionChanged(slotId, subId, "subscriptions changed")
++                    }
++                }
++            }
++        }
++        try {
++            getSystemService(SubscriptionManager::class.java)
++                .addOnSubscriptionsChangedListener(mainExecutor, listener)
++            subscriptionsListener = listener
++        } catch (t: Throwable) {
++            Rlog.w(TAG, "Cannot follow subscription changes", t)
++        }
+     }
+ 
+     private fun periodicRegisterPendingIntent(): PendingIntent {
+@@ -63,7 +97,8 @@ class PhhImsService : ImsService() {
+         // after that registration and its IPsec association have expired.
+         val nowMs = SystemClock.elapsedRealtime()
+         var exactAlarmScheduled = false
+-        if (alarmManager.canScheduleExactAlarms()) {
++        // Exact alarms need no grant before Android 12
++        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()) {
+             try {
+                 alarmManager.setExactAndAllowWhileIdle(
+                     AlarmManager.ELAPSED_REALTIME_WAKEUP,
+@@ -171,6 +206,27 @@ class PhhImsService : ImsService() {
+         }
+     }
+ 
++    // Android 11 entry points: per slot, without the subscription.
++    override fun createMmTelFeature(slotId: Int): MmTelFeature {
++        val subId = phhSubscriptionIdForSlot(slotId)
++        synchronized(stateLock) { subIdsBySlot[slotId] = subId }
++        return createMmTelFeatureForSubscription(slotId, subId)
++    }
++
++    override fun getConfig(slotId: Int): ImsConfigImplBase =
++        synchronized(stateLock) {
++            configsBySlot.getOrPut(slotId) {
++                PhhImsConfig()
++            }
++        }
++
++    override fun getRegistration(slotId: Int): ImsRegistrationImplBase =
++        synchronized(stateLock) {
++            imsRegistrationsBySlot.getOrPut(slotId) {
++                ImsRegistrationImplBase()
++            }
++        }
++
+     fun getActiveSipHandlers() =
+         synchronized(stateLock) {
+             mmTelFeaturesBySlot.values.toList()
+@@ -186,6 +242,16 @@ class PhhImsService : ImsService() {
+     override fun onDestroy() {
+         Rlog.d(TAG, "onDestroy")
+ 
++        subscriptionsListener?.let {
++            try {
++                getSystemService(SubscriptionManager::class.java)
++                    .removeOnSubscriptionsChangedListener(it)
++            } catch (t: Throwable) {
++                Rlog.w(TAG, "Failed removing the subscriptions listener", t)
++            }
++            subscriptionsListener = null
++        }
++
+         val features = synchronized(stateLock) {
+             val snapshot = mmTelFeaturesBySlot.values.toList()
+             mmTelFeaturesBySlot.clear()
+diff --git a/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt b/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
+index 97a728a..3a137eb 100644
+--- a/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
++++ b/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
+@@ -9,6 +9,8 @@ import android.os.Message
+ import android.telephony.Rlog
+ import android.telephony.ServiceState
+ import android.telephony.SubscriptionManager
++import android.os.Build
++import android.telephony.PhoneStateListener
+ import android.telephony.TelephonyCallback
+ import android.telephony.TelephonyManager
+ import android.telephony.ims.ImsCallProfile
+@@ -25,6 +27,11 @@ import android.telephony.ims.stub.ImsUtImplBase
+ import java.util.concurrent.Executors
+ import java.lang.Object
+ import me.phh.sip.SipHandler
++import me.phh.sip.phhAtLeastS
++import me.phh.sip.phhInitiatingFailed
++import me.phh.sip.phhNetworkRegistered
++import me.phh.sip.phhRegisteredPlmn
++import me.phh.sip.phhSubscriptionIdForSlot
+ import me.phh.sip.randomBytes
+ import me.phh.sip.toHex
+ import android.telephony.AccessNetworkConstants
+@@ -35,11 +42,7 @@ import android.telephony.NetworkRegistrationInfo
+ // changeEnabledCapabilities that has a protected (CapabilityCallbackProxy)
+ // argument. See this stackoverflow link for why we cannot do it directly:
+ // https://stackoverflow.com/questions/49284094/inheritance-from-java-class-with-a-public-method-accepting-a-protected-class-in/49287402#49287402
+-private fun ServiceState.phhRegisteredPlmnForIms(): String? {
+-    return networkRegistrationInfoList
+-        .firstOrNull { !it.registeredPlmn.isNullOrEmpty() }
+-        ?.registeredPlmn
+-}
++private fun ServiceState.phhRegisteredPlmnForIms(): String? = phhRegisteredPlmn()
+ 
+ private fun ServiceState.isCellularReadyForPhhIms(
+     registeredPlmn: String? = phhRegisteredPlmnForIms(),
+@@ -57,7 +60,7 @@ private fun ServiceState.phhIwlanRegistrationForIms(): NetworkRegistrationInfo?
+ private fun ServiceState.isIwlanReadyForPhhIms(): Boolean {
+     val iwlanRegistration = phhIwlanRegistrationForIms() ?: return false
+ 
+-    val iwlanRegistered = iwlanRegistration.isNetworkRegistered
++    val iwlanRegistered = iwlanRegistration.phhNetworkRegistered
+ 
+     val iwlanRat =
+         iwlanRegistration.accessNetworkTechnology == TelephonyManager.NETWORK_TYPE_IWLAN
+@@ -90,7 +93,7 @@ private fun ServiceState.phhImsReadyDebug(
+     val iwlanRegistration = phhIwlanRegistrationForIms()
+ 
+     return "state=$state registeredPlmn=$registeredPlmn " +
+-        "iwlanRegistered=${iwlanRegistration?.isNetworkRegistered} " +
++        "iwlanRegistered=${iwlanRegistration?.phhNetworkRegistered} " +
+         "iwlanRat=${iwlanRegistration?.accessNetworkTechnology}"
+ }
+ 
+@@ -227,7 +230,8 @@ class PhhMmTelFeature(
+     var telephonyManager: TelephonyManager? = null
+     private val readyCheckHandler = Handler(Looper.getMainLooper())
+     private var readyCheckExecutor = Executors.newSingleThreadExecutor()
+-    private var readyCheckCallback: TelephonyCallback? = null
++    // TelephonyCallback on Android 12+, PhoneStateListener on Android 11
++    private var readyCheckCallback: Any? = null
+     private var readyCheckAttempts = 0
+     private var frameworkSubId = initialSubId
+     private var invalidSubscriptionGraceGeneration = 0
+@@ -381,7 +385,7 @@ class PhhMmTelFeature(
+             return activeSubId
+         }
+ 
+-        val frameworkSlotSubId = SubscriptionManager.getSubscriptionId(slotId)
++        val frameworkSlotSubId = phhSubscriptionIdForSlot(slotId)
+         if (SubscriptionManager.isValidSubscriptionId(frameworkSlotSubId)) {
+             return frameworkSlotSubId
+         }
+@@ -431,7 +435,7 @@ class PhhMmTelFeature(
+     private fun unregisterReadyCheckCallback(reason: String) {
+         readyCheckCallback?.let { oldCallback ->
+             try {
+-                telephonyManager?.unregisterTelephonyCallback(oldCallback)
++                telephonyManager?.let { unregisterReadyCheck(it, oldCallback) }
+             } catch (t: Throwable) {
+                 Rlog.d(TAG, "$slotId unregister IMS ready callback failed after $reason: ${t.message}")
+             }
+@@ -473,28 +477,15 @@ class PhhMmTelFeature(
+ 
+         Rlog.d(TAG, "$slotId binding IMS ready check to subId=$subId after $reason")
+ 
+-        val callback = object : TelephonyCallback(), TelephonyCallback.ServiceStateListener {
+-            override fun onServiceStateChanged(serviceState: ServiceState) {
+-                if (markReadyFromServiceState(serviceState, "service state callback")) {
+-                    try {
+-                        boundTelephonyManager.unregisterTelephonyCallback(this)
+-                    } catch (t: Throwable) {
+-                        Rlog.d(TAG, "$slotId unregister IMS ready callback failed: ${t.message}")
+-                    }
+-                    if (readyCheckCallback === this) {
+-                        readyCheckCallback = null
+-                    }
+-                }
+-            }
+-        }
++        val callback = newReadyCheckCallback(boundTelephonyManager)
+ 
+         readyCheckCallback = callback
+-        boundTelephonyManager.registerTelephonyCallback(readyCheckExecutor, callback)
++        registerReadyCheck(boundTelephonyManager, callback)
+ 
+         boundTelephonyManager.serviceState?.let { currentState ->
+             if (markReadyFromServiceState(currentState, "current service state")) {
+                 try {
+-                    boundTelephonyManager.unregisterTelephonyCallback(callback)
++                    unregisterReadyCheck(boundTelephonyManager, callback)
+                 } catch (t: Throwable) {
+                     Rlog.d(TAG, "$slotId unregister IMS ready callback failed: ${t.message}")
+                 }
+@@ -505,6 +496,66 @@ class PhhMmTelFeature(
+         }
+     }
+ 
++    private fun onReadyCheckServiceState(
++        boundTelephonyManager: TelephonyManager,
++        callback: Any,
++        serviceState: ServiceState,
++    ) {
++        if (markReadyFromServiceState(serviceState, "service state callback")) {
++            try {
++                unregisterReadyCheck(boundTelephonyManager, callback)
++            } catch (t: Throwable) {
++                Rlog.d(TAG, "$slotId unregister IMS ready callback failed: ${t.message}")
++            }
++            if (readyCheckCallback === callback) {
++                readyCheckCallback = null
++            }
++        }
++    }
++
++    // TelephonyCallback is Android 12: Android 11 gets a PhoneStateListener
++    // on the same executor.
++    private fun newReadyCheckCallback(boundTelephonyManager: TelephonyManager): Any =
++        if (phhAtLeastS) {
++            object : TelephonyCallback(), TelephonyCallback.ServiceStateListener {
++                override fun onServiceStateChanged(serviceState: ServiceState) {
++                    onReadyCheckServiceState(boundTelephonyManager, this, serviceState)
++                }
++            }
++        } else {
++            @Suppress("DEPRECATION")
++            object : PhoneStateListener(readyCheckExecutor) {
++                @Deprecated("Android 11 path")
++                override fun onServiceStateChanged(serviceState: ServiceState) {
++                    onReadyCheckServiceState(boundTelephonyManager, this, serviceState)
++                }
++            }
++        }
++
++    @Suppress("DEPRECATION")
++    private fun registerReadyCheck(telephonyManager: TelephonyManager, callback: Any) {
++        if (phhAtLeastS) {
++            telephonyManager.registerTelephonyCallback(
++                readyCheckExecutor,
++                callback as TelephonyCallback,
++            )
++        } else {
++            telephonyManager.listen(
++                callback as PhoneStateListener,
++                PhoneStateListener.LISTEN_SERVICE_STATE,
++            )
++        }
++    }
++
++    @Suppress("DEPRECATION")
++    private fun unregisterReadyCheck(telephonyManager: TelephonyManager, callback: Any) {
++        if (phhAtLeastS) {
++            telephonyManager.unregisterTelephonyCallback(callback as TelephonyCallback)
++        } else {
++            telephonyManager.listen(callback as PhoneStateListener, PhoneStateListener.LISTEN_NONE)
++        }
++    }
++
+     private fun scheduleInvalidSubscriptionRetireGrace(oldSubId: Int, reason: String) {
+         val generation = ++invalidSubscriptionGraceGeneration
+         Rlog.w(
+@@ -652,7 +703,7 @@ class PhhMmTelFeature(
+                 mState = State.TERMINATED
+ 
+                 if (this::mListener.isInitialized) {
+-                    mListener.callSessionInitiatingFailed(
++                    mListener.phhInitiatingFailed(
+                         ImsReasonInfo(
+                             ImsReasonInfo.CODE_LOCAL_CALL_CS_RETRY_REQUIRED,
+                             ImsReasonInfo.EXTRA_CODE_CALL_RETRY_SILENT_REDIAL,
+@@ -1113,7 +1164,7 @@ sipHandler.imsFailureCallback = {
+                     terminalReported = true
+                     mState = State.TERMINATED
+                     forgetIncomingCallListener(incomingCallId)
+-                    sessionListener?.callSessionInitiatingFailed(
++                    sessionListener?.phhInitiatingFailed(
+                         ImsReasonInfo(
+                             ImsReasonInfo.CODE_NETWORK_REJECT,
+                             0,
+@@ -1400,7 +1451,7 @@ sipHandler.imsFailureCallback = {
+                 )
+                 when (failureCallback) {
+                     OutgoingCallFailureCallback.INITIATING_FAILED ->
+-                        outgoingCallListener?.callSessionInitiatingFailed(reasonInfo)
++                        outgoingCallListener?.phhInitiatingFailed(reasonInfo)
+                     OutgoingCallFailureCallback.TERMINATED ->
+                         outgoingCallListener?.callSessionTerminated(reasonInfo)
+                 }
+diff --git a/app/src/main/java/me/phh/sip/PlatformCompat.kt b/app/src/main/java/me/phh/sip/PlatformCompat.kt
+new file mode 100644
+index 0000000..ce650d5
+--- /dev/null
++++ b/app/src/main/java/me/phh/sip/PlatformCompat.kt
+@@ -0,0 +1,65 @@
++// SPDX-License-Identifier: GPL-2.0
++package me.phh.sip
++
++import android.content.Context
++import android.os.Build
++import android.telephony.NetworkRegistrationInfo
++import android.telephony.ServiceState
++import android.telephony.SmsManager
++import android.telephony.SubscriptionManager
++import android.telephony.ims.ImsCallSessionListener
++import android.telephony.ims.ImsReasonInfo
++
++// Android 11 (API 30) replacements for the Android 12-13 APIs used by the
++// stack. Each helper keeps the newer API on the releases that have it.
++
++val phhAtLeastS: Boolean
++    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
++
++private val phhAtLeastT: Boolean
++    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
++
++// NetworkRegistrationInfo.isNetworkRegistered() is Android 13; isRegistered()
++// (HOME or ROAMING) has the same meaning on the older releases.
++val NetworkRegistrationInfo.phhNetworkRegistered: Boolean
++    get() = if (phhAtLeastT) isNetworkRegistered else isRegistered
++
++// Registered PLMN of the first registration that reports one. With the
++// Android 11 legacy RIL the cell identity often has no MCC/MNC, so the
++// registered PLMN stays empty: fall back to the operator numeric of the
++// service state, which comes from the OPERATOR request.
++fun ServiceState.phhRegisteredPlmn(): String? {
++    val fromRegistration = networkRegistrationInfoList
++        .firstOrNull { !it.registeredPlmn.isNullOrEmpty() }
++        ?.registeredPlmn
++    if (fromRegistration != null) return fromRegistration
++    if (phhAtLeastS) return null
++    return operatorNumeric?.takeIf { it.length >= 5 && it.all(Char::isDigit) }
++}
++
++// SubscriptionManager.getSubscriptionId(slot) is Android 13.
++fun phhSubscriptionIdForSlot(slotId: Int): Int {
++    if (phhAtLeastT) return SubscriptionManager.getSubscriptionId(slotId)
++    return SubscriptionManager.getSubId(slotId)?.firstOrNull()
++        ?: SubscriptionManager.INVALID_SUBSCRIPTION_ID
++}
++
++// SmsManager.createForSubscriptionId() is Android 12.
++@Suppress("DEPRECATION")
++fun phhSmsManagerFor(context: Context, subId: Int): SmsManager =
++    if (phhAtLeastS) {
++        context.getSystemService(SmsManager::class.java).createForSubscriptionId(subId)
++    } else {
++        SmsManager.getSmsManagerForSubscriptionId(subId)
++    }
++
++// callSessionInitiatingFailed() is Android 12; Android 11 reports a failed
++// start through callSessionInitiatedFailed().
++@Suppress("DEPRECATION")
++fun ImsCallSessionListener.phhInitiatingFailed(reasonInfo: ImsReasonInfo) {
++    if (phhAtLeastS) {
++        callSessionInitiatingFailed(reasonInfo)
++    } else {
++        callSessionInitiatedFailed(reasonInfo)
++    }
++}
+diff --git a/app/src/main/java/me/phh/sip/SipAccessNetworkHeaders.kt b/app/src/main/java/me/phh/sip/SipAccessNetworkHeaders.kt
+index cb8dc3e..793eb96 100644
+--- a/app/src/main/java/me/phh/sip/SipAccessNetworkHeaders.kt
++++ b/app/src/main/java/me/phh/sip/SipAccessNetworkHeaders.kt
+@@ -29,7 +29,7 @@ internal object SipAccessNetworkHeaders {
+                 ?.firstOrNull {
+                     it.transportType == AccessNetworkConstants.TRANSPORT_TYPE_WWAN &&
+                         (it.domain and NetworkRegistrationInfo.DOMAIN_PS) != 0 &&
+-                        it.isNetworkRegistered
++                        it.phhNetworkRegistered
+                 }
+             val cellIdentity = registration?.cellIdentity as? CellIdentityLte
+             if (cellIdentity == null) {
+diff --git a/app/src/main/java/me/phh/sip/SipAudioModeRestorer.kt b/app/src/main/java/me/phh/sip/SipAudioModeRestorer.kt
+index df8943a..3f202fd 100644
+--- a/app/src/main/java/me/phh/sip/SipAudioModeRestorer.kt
++++ b/app/src/main/java/me/phh/sip/SipAudioModeRestorer.kt
+@@ -38,7 +38,8 @@ object SipAudioModeRestorer {
+                 "currentMode=$currentMode previousMode=$previousMode wantedMode=$wantedMode",
+         )
+         try {
+-            audioManager.clearCommunicationDevice()
++            // Android 12+: no communication device API before it
++            if (phhAtLeastS) audioManager.clearCommunicationDevice()
+         } catch (t: Throwable) {
+             Rlog.d(logTag, "clearCommunicationDevice failed during IMS audio restore: $reason", t)
+         }
+diff --git a/app/src/main/java/me/phh/sip/SipHandler.kt b/app/src/main/java/me/phh/sip/SipHandler.kt
+index 3ff2405..34bd38e 100644
+--- a/app/src/main/java/me/phh/sip/SipHandler.kt
++++ b/app/src/main/java/me/phh/sip/SipHandler.kt
+@@ -1362,14 +1362,14 @@ fun setRequestCallback(method: SipMethod, cb: (SipRequest) -> Int) {
+         )
+ 
+         val iwlanReady = iwlanRegistration?.let { registration ->
+-            registration.isNetworkRegistered &&
++            registration.phhNetworkRegistered &&
+                 registration.accessNetworkTechnology == TelephonyManager.NETWORK_TYPE_IWLAN
+         } == true
+ 
+         Rlog.d(
+             TAG,
+             "WFC Wi-Fi preferred IWLAN readiness: ready=$iwlanReady " +
+-                "registered=${iwlanRegistration?.isNetworkRegistered} " +
++                "registered=${iwlanRegistration?.phhNetworkRegistered} " +
+                 "rat=${iwlanRegistration?.accessNetworkTechnology}",
+         )
+         return iwlanReady
+@@ -3105,7 +3105,7 @@ fun onWfcDisabled(reason: String) {
+             null
+         } ?: return false
+ 
+-        return iwlanInfo.isNetworkRegistered &&
++        return iwlanInfo.phhNetworkRegistered &&
+             iwlanInfo.accessNetworkTechnology == TelephonyManager.NETWORK_TYPE_IWLAN
+     }
+ 
+diff --git a/app/src/main/java/me/phh/sip/SipSmsHandler.kt b/app/src/main/java/me/phh/sip/SipSmsHandler.kt
+index 807c95e..01ec421 100644
+--- a/app/src/main/java/me/phh/sip/SipSmsHandler.kt
++++ b/app/src/main/java/me/phh/sip/SipSmsHandler.kt
+@@ -297,7 +297,7 @@ internal class SipSmsHandler(
+             failCb()
+             return
+         }
+-        val smsManager = ctxt.getSystemService(SmsManager::class.java).createForSubscriptionId(subId)
++        val smsManager = phhSmsManagerFor(ctxt, subId)
+         val smscIdentity = try {
+             val i = smsManager
+                 .javaClass

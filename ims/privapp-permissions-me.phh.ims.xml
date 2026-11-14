@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+
+     SPDX-License-Identifier: Apache-2.0
+-->
+<!-- phh IMS (ims/): the app shares the system uid and is platform signed;
+     list its privileged permissions anyway. Android 11 has no
+     SCHEDULE_EXACT_ALARM, which the app also requests. -->
+<permissions>
+    <privapp-permissions package="me.phh.ims">
+        <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE"/>
+        <permission name="android.permission.MODIFY_PHONE_STATE"/>
+    </privapp-permissions>
+</permissions>

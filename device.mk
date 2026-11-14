@@ -329,6 +329,18 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     lumia-uim-bootstrap
 
+# VoLTE through phh's userspace IMS stack (krazey/ims fork, ported to
+# Android 11: ims/README.md). rild loads qcril through libril-lumia-pcscf,
+# which adds the P-CSCF that qcril never reports; lumia-ims-profile makes
+# the modem's "ims" profile usable (IPv4v6, P-CSCF in the PCO).
+PRODUCT_PACKAGES += \
+    PhhIms \
+    libril-lumia-pcscf \
+    lumia-ims-profile
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/ims/privapp-permissions-me.phh.ims.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/privapp-permissions-me.phh.ims.xml
+
 # NFC: NXP PN544 (HCI, pre-NCI), wired as on the 1520 (stock SSDT
 # \_SB.NFC1), driven by the legacy NXP stack (external/libnfc-nxp and the
 # nxp variant of packages/apps/Nfc). EEPROM settings from the 930 stock

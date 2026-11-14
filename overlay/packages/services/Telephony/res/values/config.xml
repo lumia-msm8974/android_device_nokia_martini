@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The LineageOS Project
+
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Device-level MmTel ImsService: phh IMS (ims/README.md). Same value as
+         the PhhImsOverlay of the upstream project, set here instead. -->
+    <string name="config_ims_mmtel_package" translatable="false">me.phh.ims</string>
+</resources>

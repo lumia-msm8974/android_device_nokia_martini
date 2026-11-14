@@ -93,4 +93,19 @@
     <item name="config_highResTaskSnapshotScale" format="float" type="dimen">0.6</item>
     <item name="config_lowResTaskSnapshotScale" format="float" type="dimen">0.3</item>
     <bool name="config_use16BitTaskSnapshotPixelFormat">true</bool>
+
+    <!-- VoLTE through phh IMS (ims/README.md): voice only, on LTE. No video
+         calls and no Wi-Fi calling (IWLAN needs IPsec tunnel interfaces that
+         the 3.4 kernel lacks). -->
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_carrier_volte_available">true</bool>
+    <bool name="config_device_vt_available">false</bool>
+    <bool name="config_carrier_vt_available">false</bool>
+    <bool name="config_device_wfc_ims_available">false</bool>
+    <bool name="config_carrier_wfc_ims_available">false</bool>
+
+    <!-- The voice of an IMS call is an AP VoIP stream (phh IMS), not a modem
+         voice session: Telecom must not put the audio HAL in MODE_IN_CALL,
+         which would start a CSD call and take the microphone. -->
+    <bool name="config_use_voip_mode_for_ims">true</bool>
 </resources>

@@ -15,9 +15,11 @@ ro.qualcomm.cabl=0
 # audio_platform_info.xml) for the dual-mic call.
 persist.vendor.audio.fluence.voicecall=false
 
-# Radio: Qualcomm QMI RIL from the generic MSM8974 blobs
-rild.libpath=/system/vendor/lib/libril-qc-qmi-1.so
-vendor.rild.libpath=/system/vendor/lib/libril-qc-qmi-1.so
+# Radio: Qualcomm QMI RIL from the generic MSM8974 blobs, loaded by the
+# P-CSCF wrapper (ril/lumia-ril-pcscf.c). To go back to qcril alone:
+# persist.vendor.lumia.ril_pcscf=0 (pass-through) or these two properties.
+rild.libpath=/system/vendor/lib/libril-lumia-pcscf.so
+vendor.rild.libpath=/system/vendor/lib/libril-lumia-pcscf.so
 persist.radio.add_power_save=1
 persist.radio.apm_sim_not_pwdn=1
 ro.ril.ext.ecclist=112,911,999,110,122,119,120,000,08,118
@@ -30,3 +32,7 @@ ro.bt.bdaddr_path=/persist/bdaddr.txt
 # Power HAL perf locks: libmartini-perflock applies them in place of
 # mpdecision (overrides libqti-perfd-client.so of the msm8974 common tree)
 ro.vendor.extension_library=libmartini-perflock.so
+
+# VoLTE (phh IMS): let the 4G calling switch show without the carrier's
+# provisioning
+persist.dbg.volte_avail_ovr=1

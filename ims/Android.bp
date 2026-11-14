@@ -1,0 +1,19 @@
+//
+// Copyright (C) 2026 The LineageOS Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+// phh IMS (krazey/ims fork, GPL-2.0) ported to Android 11: userspace IMS
+// stack used as the device MmTel ImsService for VoLTE. Built from the
+// sources and patches described in README.md, then re-signed here with the
+// platform key (it shares the system uid).
+android_app_import {
+    name: "PhhIms",
+    apk: "prebuilt/PhhIms.apk",
+    certificate: "platform",
+    privileged: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}

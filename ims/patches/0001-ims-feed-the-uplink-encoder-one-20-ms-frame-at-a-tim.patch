@@ -1,0 +1,124 @@
+From d8b14f2598343165eb64ca6d50b5dbec92665e43 Mon Sep 17 00:00:00 2001
+From: Lorenzo Giannoccaro <giannoccarol@users.noreply.github.com>
+Date: Sat, 7 Nov 2026 16:24:47 +0100
+Subject: [PATCH 1/2] ims: feed the uplink encoder one 20 ms frame at a time
+
+The OMX software AMR encoders (OMX.google.amrnb/amrwb.encoder), still
+selected on some ROMs, have single-frame input buffers. A 40 ms
+AudioRecord read was copied into one input buffer, which threw
+BufferOverflowException in the encode thread and killed the service as
+soon as the call was answered.
+
+Queue exactly one frame per input buffer and keep the leftover samples
+for the next read, so the blocking drain always waits for a full frame.
+Clamp the copy to the buffer size as a last guard.
+---
+ .../java/me/phh/sip/SipUplinkAudioEncoder.kt  |  8 ++-
+ .../java/me/phh/sip/SipUplinkAudioLoop.kt     | 65 +++++++++++++------
+ 2 files changed, 51 insertions(+), 22 deletions(-)
+
+diff --git a/app/src/main/java/me/phh/sip/SipUplinkAudioEncoder.kt b/app/src/main/java/me/phh/sip/SipUplinkAudioEncoder.kt
+index 7a0b789..3b559a4 100644
+--- a/app/src/main/java/me/phh/sip/SipUplinkAudioEncoder.kt
++++ b/app/src/main/java/me/phh/sip/SipUplinkAudioEncoder.kt
+@@ -33,10 +33,14 @@ object SipUplinkAudioEncoder {
+                 gainQ8 = gainQ8,
+             )
+         }
+-        inBuf.put(buffer, 0, size)
++        val queued = minOf(size, inBuf.remaining())
++        if (queued < size) {
++            Rlog.w(logTag, "Encoder input buffer holds $queued of $size PCM bytes")
++        }
++        inBuf.put(buffer, 0, queued)
+ 
+         // Fake timestamp but it is not appearing in the output stream anyway
+-        encoder.queueInputBuffer(inBufIdx, 0, size, System.nanoTime() / 1000, 0)
++        encoder.queueInputBuffer(inBufIdx, 0, queued, System.nanoTime() / 1000, 0)
+     }
+ 
+     fun drainEncodedOutput(
+diff --git a/app/src/main/java/me/phh/sip/SipUplinkAudioLoop.kt b/app/src/main/java/me/phh/sip/SipUplinkAudioLoop.kt
+index 5b28a8b..5a69558 100644
+--- a/app/src/main/java/me/phh/sip/SipUplinkAudioLoop.kt
++++ b/app/src/main/java/me/phh/sip/SipUplinkAudioLoop.kt
+@@ -42,6 +42,14 @@ internal object SipUplinkAudioLoop {
+         val aecOutput = ByteArray(
+             bufferSize + (audioCodec.sampleRate / 100 * 2),
+         )
++        // Feed the encoder one 20 ms frame at a time. The OMX software AMR
++        // encoders (OMX.google.amrnb/amrwb.encoder, still picked on some
++        // ROMs) have single-frame input buffers: a 40 ms read overflowed them
++        // and killed the call. Leftover samples wait for the next read, so the
++        // blocking drain below always has a full frame to wait for.
++        val frameBytes = audioCodec.sampleRate / 50 * 2
++        val pending = ByteArray(aecOutput.size + bufferSize + frameBytes)
++        var pendingSize = 0
+ 
+         while (true) {
+             if (callStopped.get() || callGeneration.get() != generation) break
+@@ -68,27 +76,44 @@ internal object SipUplinkAudioLoop {
+                 encodeSize = aecSize
+             }
+ 
+-            SipUplinkAudioEncoder.queuePcmInput(
+-                logTag = logTag,
+-                encoder = encoder,
+-                buffer = encodeBuffer,
+-                size = encodeSize,
+-                gainQ8 = gainQ8,
+-                logInput = realFrameCount < 5,
+-            )
++            if (pendingSize + encodeSize > pending.size) {
++                Rlog.w(logTag, "Uplink PCM backlog overflow: dropping $pendingSize bytes")
++                pendingSize = 0
++            }
++            System.arraycopy(encodeBuffer, 0, pending, pendingSize, encodeSize)
++            pendingSize += encodeSize
+ 
+-            val drainState = SipUplinkAudioEncoder.drainEncodedOutput(
+-                logTag = logTag,
+-                encoder = encoder,
+-                audioCodec = audioCodec,
+-                firstPacket = firstPacket,
+-                realFrameCount = realFrameCount,
+-                nextSequenceNumber = nextSequenceNumber,
+-                nextTimestamp = nextTimestamp,
+-                sendFrame = sendFrame,
+-            )
+-            firstPacket = drainState.firstPacket
+-            realFrameCount = drainState.realFrameCount
++            var offset = 0
++            while (pendingSize - offset >= frameBytes) {
++                val frame = pending.copyOfRange(offset, offset + frameBytes)
++                offset += frameBytes
++
++                SipUplinkAudioEncoder.queuePcmInput(
++                    logTag = logTag,
++                    encoder = encoder,
++                    buffer = frame,
++                    size = frameBytes,
++                    gainQ8 = gainQ8,
++                    logInput = realFrameCount < 5,
++                )
++
++                val drainState = SipUplinkAudioEncoder.drainEncodedOutput(
++                    logTag = logTag,
++                    encoder = encoder,
++                    audioCodec = audioCodec,
++                    firstPacket = firstPacket,
++                    realFrameCount = realFrameCount,
++                    nextSequenceNumber = nextSequenceNumber,
++                    nextTimestamp = nextTimestamp,
++                    sendFrame = sendFrame,
++                )
++                firstPacket = drainState.firstPacket
++                realFrameCount = drainState.realFrameCount
++            }
++            if (offset > 0) {
++                System.arraycopy(pending, offset, pending, 0, pendingSize - offset)
++                pendingSize -= offset
++            }
+         }
+     }
+ }

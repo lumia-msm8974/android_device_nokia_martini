@@ -52,6 +52,10 @@ the 930):
   (opens the USIM provisioning session the Windows MPSS leaves DETECTED; it
   accepts `ro.boot.hardware` bandit and martini), QMI RIL from the generic
   MSM8974 blobs, `rmt_storage` on the copied EFS partitions;
+- VoLTE through phh IMS ported to Android 11 (`ims/README.md`): the
+  generic qcril is loaded by `libril-lumia-pcscf`, which adds the P-CSCF
+  that qcril never reports, and `lumia-ims-profile` makes the modem's `ims`
+  profile usable (IPv4v6, P-CSCF in the PCO). Unverified on a 930;
 - Wi-Fi/Bluetooth: Pronto with the phone's own NV, MAC and BD address
   provisioned into `/persist` from the Windows DPP partition
   (`init.martini.wifi.sh`, `init.qcom.bt.sh`);
@@ -350,3 +354,10 @@ To test on the phone:
 - imbushuo, [boot-shim](https://github.com/imbushuo/boot-shim).
 - René Lergner (HeathCliff), [WPinternals](https://github.com/ReneLergner/WPinternals).
 - [TeamWin](https://github.com/TeamWin): TWRP.
+- Pierre-Hugues Husson (phhusson), [phhusson/ims](https://github.com/phhusson/ims),
+  and krazey, [krazey/ims](https://github.com/krazey/ims) (`a3fec01`): the
+  userspace IMS stack of `ims/`, with amikhasenko, ewan-xu (AEC3),
+  Langsdorff (clangsdorff) and TrebleDroid; details in `ims/README.md`.
+- [libqmi](https://gitlab.freedesktop.org/mobile-broadband/libqmi): QMI WDS
+  definitions used to check the raw requests of `ril/lumia-ril-pcscf.c` and
+  `ril/lumia-ims-profile.c`.
