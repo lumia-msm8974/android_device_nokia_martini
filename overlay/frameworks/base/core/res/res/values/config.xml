@@ -84,7 +84,7 @@
     <string name="config_dozeComponent" translatable="false">com.android.systemui/com.android.systemui.doze.DozeService</string>
     <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
     <bool name="config_dozeAlwaysOnEnabled">false</bool>
-    <integer name="config_screenBrightnessDoze">17</integer>
+    <integer name="config_screenBrightnessDoze">8</integer>
 
     <!-- Lighter recents snapshots. On every app close system_server reads the
          app window back from the GPU and compresses it for the recents screen:
