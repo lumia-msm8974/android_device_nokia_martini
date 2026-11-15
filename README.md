@@ -1,8 +1,14 @@
 # Device tree for the Nokia Lumia 930 (martini) — LineageOS 18.1
 
-**Status: not booted — the device is not available yet.** The tree is
-written to be consistent and ready to build, but no image built from it has
-ever run on a Lumia 930. Nothing here is verified on the hardware.
+**Status (15/11/2026): test builds run on a real Lumia 930 (RM-1045).**
+
+| Works on the phone | Not yet |
+|---|---|
+| Display, touch, double tap to wake; Wi-Fi, Bluetooth, NFC | VoLTE: phh IMS registers on Iliad only with a P-CSCF given by hand, and calls fall back to 3G (`503 BEARER_RELEASED`); see `ims/README.md` |
+| SIM, LTE data, SMS, **calls with earpiece and microphone** | No system suspend on this firmware (blocked on purpose): about 160 mA with the screen off |
+| **GPS with a satellite fix** (14 satellites, 6 m, 15/11) | A SIM inserted with the phone on is only read after a restart (the modem has no hot swap) |
+| Both cameras, flash and torch, hardware video | A flash capture with the lens covered keeps the LED on |
+| Speaker, vibration, accelerometer, gyroscope, magnetometer, light and proximity sensor, charging | |
 
 | | |
 |---|---|
@@ -276,12 +282,12 @@ light sensor i2c-4, NFC i2c-3).
 
 Still open:
 
-- [ ] accelerometer, gyroscope, magnetometer on the Sensor Core (DSDT
+- [x] accelerometer, gyroscope, magnetometer on the Sensor Core (DSDT
       `\_SB.SEN1`, QCOM2495, as on the Nexus 5): does the Windows ADSP image
       take the registry of `sensors.qcom`, and are the axes right
       (`sensors/ssc/`, on by default, `persist.vendor.martini.ssc 0` to turn it off)?
 - [ ] product code(s) of the phone (RM-1045, RM-1087) for the OTA assert;
-- [ ] audio: which DMIC is which on the 930 (1520 inputs assumed);
+- [x] audio: which DMIC is which on the 930 (DMIC2 main, DMIC1 second; DMIC3/4 silent);
 - [ ] vibrator: a vibration during a call also reaches the earpiece path
       (MultiMedia9 shares SLIMBUS_0_RX); a separate back end needs a kernel
       change;
@@ -307,10 +313,10 @@ To test on the phone:
 - [ ] MDSS panel and `lcd-backlight` range; always-on display: idle mode
       entry/exit, double tap from it, current draw against a normal screen
       on (`/sys/module/mdss_fb/parameters/video_doze` 1/0);
-- [ ] touch, double tap to wake, keys and key backlight (which KPDBL row);
-- [ ] NFC (PN544 with the 930 EEPROM settings, SIM card emulation);
-- [ ] Wi-Fi, Bluetooth, modem (UIM bootstrap, SIM, data, calls), GPS;
-- [ ] audio routes (speaker, earpiece, headset, microphones);
+- [x] touch, double tap to wake; [ ] keys and key backlight (which KPDBL row);
+- [x] NFC (PN544 with the 930 EEPROM settings); [ ] SIM card emulation;
+- [x] Wi-Fi, Bluetooth, modem (UIM bootstrap, SIM, data, SMS, calls), GPS fix;
+- [x] audio routes: speaker, earpiece, microphones (also in calls); [ ] headset;
 - [ ] battery and Qi charging (power supply sysfs paths);
 - [ ] installer partition layout against the 930 GPT (unique names: no
       second `userdata`).
