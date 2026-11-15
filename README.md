@@ -8,7 +8,7 @@
 | SIM, LTE data, SMS, **calls with earpiece and microphone** | No system suspend on this firmware (blocked on purpose): about 160 mA with the screen off |
 | **GPS with a satellite fix** (14 satellites, 6 m, 15/11) | A SIM inserted with the phone on is only read after a restart (the modem has no hot swap) |
 | Both cameras, flash and torch, hardware video | A flash capture with the lens covered keeps the LED on |
-| Speaker, vibration, accelerometer, gyroscope, magnetometer, light and proximity sensor, charging | |
+| Speaker, vibration, accelerometer, gyroscope, magnetometer, light and proximity sensor, charging (also Qi wireless) | |
 
 | | |
 |---|---|
