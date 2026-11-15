@@ -6,9 +6,14 @@ application processor by phh IMS, a userspace SIP/IMS stack that acts as the
 device MmTel `ImsService`. The voice is an AP VoIP stream
 (`config_use_voip_mode_for_ims`), not a modem voice session.
 
-Status: on a 930 (14/11/2026) the framework binds phh and the service runs;
-IMS registration and calls are not tried yet. Same design as the working
-VoLTE of the Lumia 950 XL port (Android 16, Iliad Italy, 7/11/2026).
+Status on a 930 (15/11/2026, Iliad): the framework binds phh, the IMS PDN
+comes up on `rmnet1` and phh registers (USIM AKA, IPsec, `REGISTER 200 OK`)
+**only with a P-CSCF given by hand** (`persist.ims.pcscf_fallback`): the
+wrapper cannot read it, because qmuxd offers QMI on one connection only
+(instance 0x80, `rmnet0`). Calls do not work yet: Iliad ends the INVITE
+with `503 PO: ASR: BEARER_RELEASED` (the dedicated voice bearer is
+released) and phh falls back to a CS call. Without the property phh does
+not register, so calls stay on CS.
 
 ## Pieces
 
@@ -58,6 +63,10 @@ is built in the LineageOS 23.2 tree of the 950 XL port, with
      Android 11 (the class failed to load with a `LinkageError` as soon as
      the framework bound the service); the feature starts from
      `onFeatureReady()` or the first subscription update instead.
+   - `0004`: PhhImsService starts the feature right after
+     `createMmTelFeature()`, once `initialize()` has set the context: on
+     Android 11 the framework calls `onFeatureReady()` only after the
+     feature reports READY, so waiting for it never started the feature.
 2. build `PhhIms` in a LineageOS 21+ tree. The project builds it in the
    tree of the 950 XL port, next to that port's own PhhIms, so the modules
    get other names there (`build-env/build-phhims-a11.sh`, not part of this
@@ -66,7 +75,7 @@ is built in the LineageOS 23.2 tree of the 950 XL port, with
    `System.loadLibrary()` changed to match; nothing else differs.
 
 `prebuilt/PhhIms.apk`: krazey `a3fec01` + `patches/` (phh branch
-`martini-a11` @ `8e6073a`), sha256 `6859af21…`, `minSdkVersion` 30,
+`martini-a11` @ `9d0aa8b`), sha256 `5ebbb0cf…`, `minSdkVersion` 30,
 armeabi-v7a only.
 
 ## Trying it

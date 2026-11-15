@@ -1,0 +1,73 @@
+From 9d0aa8b80973b736b43502c6399a8d178a4b1b81 Mon Sep 17 00:00:00 2001
+From: Lorenzo Giannoccaro <giannoccarol@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 12:22:11 +0100
+Subject: [PATCH] ims: start the MmTel feature after ImsService has initialized
+ it
+
+On Android 11 the framework sets the feature listener, and so calls
+onFeatureReady(), only once the feature reports READY, which it never did:
+the feature waited for onFeatureReady() to start. PhhImsService now starts
+it right after createMmTelFeature(), once initialize() has set the
+context.
+---
+ app/src/main/java/me/phh/ims/PhhImsService.kt | 19 ++++++++++++++++++-
+ .../main/java/me/phh/ims/PhhMmTelFeature.kt   |  6 +++---
+ 2 files changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/app/src/main/java/me/phh/ims/PhhImsService.kt b/app/src/main/java/me/phh/ims/PhhImsService.kt
+index 140a32e..9fe6ab1 100644
+--- a/app/src/main/java/me/phh/ims/PhhImsService.kt
++++ b/app/src/main/java/me/phh/ims/PhhImsService.kt
+@@ -8,6 +8,8 @@ import android.content.Intent
+ import android.content.IntentFilter
+ import android.os.Binder
+ import android.os.Build
++import android.os.Handler
++import android.os.Looper
+ import android.os.SystemClock
+ import android.telephony.Rlog
+ import android.telephony.SubscriptionManager
+@@ -210,7 +212,22 @@ class PhhImsService : ImsService() {
+     override fun createMmTelFeature(slotId: Int): MmTelFeature {
+         val subId = phhSubscriptionIdForSlot(slotId)
+         synchronized(stateLock) { subIdsBySlot[slotId] = subId }
+-        return createMmTelFeatureForSubscription(slotId, subId)
++        val feature = createMmTelFeatureForSubscription(slotId, subId)
++        // ImsService calls the final initialize() right after this returns, and the
++        // framework only sets the listener (onFeatureReady) once the feature is READY:
++        // start it from here as soon as the context is set.
++        (feature as? PhhMmTelFeature)?.let { startWhenInitialized(it, 0) }
++        return feature
++    }
++
++    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
++
++    private fun startWhenInitialized(feature: PhhMmTelFeature, tries: Int) {
++        mainHandler.postDelayed({
++            if (!feature.ensureInitialized("createMmTelFeature") && tries < 50) {
++                startWhenInitialized(feature, tries + 1)
++            }
++        }, 100)
+     }
+ 
+     override fun getConfig(slotId: Int): ImsConfigImplBase =
+diff --git a/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt b/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
+index 5be51ba..3dca47c 100644
+--- a/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
++++ b/app/src/main/java/me/phh/ims/PhhMmTelFeature.kt
+@@ -643,9 +643,9 @@ class PhhMmTelFeature(
+     }
+ 
+     // ImsFeature.initialize() is final on Android 11 (ImsService calls it right after
+-    // createMmTelFeature()), so it cannot be overridden: start the feature the first time
+-    // the framework talks to it once the context is set.
+-    private fun ensureInitialized(reason: String): Boolean {
++    // createMmTelFeature()), so it cannot be overridden: PhhImsService starts the feature
++    // once the context is set, and the first framework call does it too.
++    internal fun ensureInitialized(reason: String): Boolean {
+         if (featureInitialized) return true
+         if ((mContext as Context?) == null) return false
+ 
+-- 
+2.56.1
+
