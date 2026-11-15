@@ -47,8 +47,14 @@ the 930):
   base `0x10000000`). The ELF loaded by BootShim must have its entry point
   at `0x7cc00000` on the 930 (`0x0ff00000` on the 1520);
 - restricted Windows Phone TrustZone (`msm_tz_restricted=1`): no SCM CPU
-  bring-up (cores 1-3 through the UEFI parking mailboxes), no power
-  collapse, no hotplug, no QSEE (software keymaster, gatekeeper, FDE);
+  bring-up (cores 1-3 through the UEFI parking mailboxes), no system
+  suspend, no hotplug, no QSEE (software keymaster, gatekeeper, FDE);
+- idle power collapse (experimental, since v17): the cores
+  collapse through the same TrustZone call Windows uses and resume through
+  the UEFI parking mailbox; with all four down the L2 goes off and the RPM
+  gets the sleep set (kernel `lumia_tzpc`, `lumia_tzpc.l2=4` on the command
+  line). Always-on display 307 -> 255 mA. XO shutdown does not happen yet.
+  `setprop persist.vendor.martini.tzpc 0` turns it off;
 - helpers: `libmartini-perflock` (power HAL boosts without
   mpdecision; it also holds the Adreno at 389 MHz or faster during touch,
   fling and launch boosts, `persist.vendor.perflock.gpu_floor_mhz`, 0 =
@@ -338,7 +344,8 @@ To test on the phone:
   `power_profile.xml`.
 - Markynose (Mark Buchok), [lumia930-linux](https://github.com/Markynose/lumia930-linux):
   the 930 hardware map from its DSDT/SSDT (touch, light/proximity sensor,
-  keys, battery), boot chain and SMP through the UEFI parking mailboxes.
+  keys, battery), boot chain and SMP through the UEFI parking mailboxes,
+  which the idle power collapse also uses to resume.
 - 2314372037 ("zh"), [android_device_nokia_martini](https://github.com/2314372037/android_device_nokia_martini)
   (LineageOS 17.1, branch `lineage-17.1`, `da9e108`): the first Android port
   that boots on the 930; used for comparison (TAS2552 speaker route,

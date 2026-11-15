@@ -148,3 +148,19 @@ on property:sys.boot_completed=1 && property:persist.vendor.martini.screenoff_gr
 
 on property:sys.boot_completed=1 && property:persist.vendor.martini.screenoff_max_khz=*
     write /sys/module/lumia_screenoff/parameters/max_freq ${persist.vendor.martini.screenoff_max_khz}
+
+# Idle power collapse of the cores through the Windows Phone firmware (kernel
+# lumia_tzpc, resume through the UEFI parking mailbox). Once all four cores
+# are collapsed the L2 goes off and the RPM gets the sleep set. A connected
+# USB cable keeps the cores out (the gadget votes a 2 us latency).
+# persist.vendor.martini.tzpc=0 turns it off at once, 1 back on.
+on property:sys.boot_completed=1 && property:persist.vendor.martini.tzpc=1
+    write /sys/module/lumia_tzpc/parameters/cpus 15
+    write /sys/module/msm_pm/modes/cpu0/standalone_power_collapse/idle_enabled 1
+    write /sys/module/msm_pm/modes/cpu1/standalone_power_collapse/idle_enabled 1
+    write /sys/module/msm_pm/modes/cpu2/standalone_power_collapse/idle_enabled 1
+    write /sys/module/msm_pm/modes/cpu3/standalone_power_collapse/idle_enabled 1
+    write /sys/module/lumia_tzpc/parameters/enable 1
+
+on property:persist.vendor.martini.tzpc=0
+    write /sys/module/lumia_tzpc/parameters/enable 0

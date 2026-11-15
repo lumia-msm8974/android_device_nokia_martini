@@ -397,6 +397,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Never 0x04 (GPU/OCMEM): it hangs the ADSP. 0x40 is untested.
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vendor.martini.screenoff_groups=0x29 \
+    persist.vendor.martini.tzpc=1 \
     persist.vendor.martini.screenoff_max_khz=0
 
 # Rootdir

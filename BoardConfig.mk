@@ -58,6 +58,10 @@ BOARD_KERNEL_SEPARATED_DT := false
 BOARD_KERNEL_PAGESIZE := 2048
 BOARD_KERNEL_CMDLINE := androidboot.hardware=martini androidboot.bootdevice=msm_sdcc.1 \
     msm_tz_restricted=1
+# Idle power collapse through the Windows Phone firmware (kernel lumia_tzpc):
+# with all the cores collapsed the L2 may go off and the RPM gets the sleep
+# set. Read at boot only; init turns the collapse itself on (power.rc).
+BOARD_KERNEL_CMDLINE += lumia_tzpc.l2=4
 # SELinux is permissive from the command line during bring-up (see the
 # SELinux section below); MARTINI_SELINUX_ENFORCING=true leaves it out.
 ifneq ($(MARTINI_SELINUX_ENFORCING),true)
