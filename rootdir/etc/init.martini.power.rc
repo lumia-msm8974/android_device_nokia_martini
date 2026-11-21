@@ -71,12 +71,17 @@ on boot
     write /sys/module/cpu_boost/parameters/input_boost_freq 1497600
     write /sys/module/cpu_boost/parameters/input_boost_ms 40
 
-    # CPU bandwidth (cpubw) governor: set after boot by init.martini.power.sh,
-    # whatever the qcom,cpubw.<N> number of the devfreq node (40 on the
-    # OnePlus One, 41 on the 1520). GPU: msm-adreno-tz is the kernel's
-    # default governor and decides in the kernel (no TrustZone DCVS calls
-    # on the Windows Phone TrustZone); the power HAL only raises its floor
-    # (min_pwrlevel, below).
+    # CPU bandwidth (qcom,cpubw devfreq node, the CPU vote for the DDR bus):
+    # left on the device tree "cpufreq" governor, which follows the CPU
+    # frequency (75 MHz of BIMC at 300 MHz, 931 MHz at the top step). The
+    # OnePlus One switches to cpubw_hwmon here: on the Lumias the interrupt
+    # of the Krait L2 monitor behind it never fires, so that governor stays
+    # at 762 MB/s (BIMC at 100 MHz) whatever the CPUs do. A cache miss then
+    # takes about 400 ns instead of 35 and apps take twice as long to start
+    # (930, 21/11/2026). GPU: msm-adreno-tz is the kernel's default governor
+    # and decides in the kernel (no TrustZone DCVS calls on the Windows
+    # Phone TrustZone); the power HAL only raises its floor (min_pwrlevel,
+    # below).
 
     # Perf locks of the power HAL (libmartini-perflock, running as system):
     # interaction, launch, display and profile boosts move these values,
@@ -127,11 +132,6 @@ on property:recovery.perf.mode=0
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "interactive"
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "interactive"
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "interactive"
-
-# Late, so that a problem of the Krait L2 monitor behind cpubw_hwmon leaves
-# time to setprop persist.vendor.martini.cpubw_hwmon 0 over adb.
-on property:sys.boot_completed=1 && property:persist.vendor.martini.cpubw_hwmon=1
-    exec - root root -- /vendor/bin/init.martini.power.sh
 
 on property:dev.bootcomplete=1
     setprop sys.io.scheduler "bfq"

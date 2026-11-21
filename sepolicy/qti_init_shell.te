@@ -7,8 +7,3 @@ allow qti_init_shell firmware_file:file mounton;
 # ... after writing the cfg file in /data/vendor/wifi (cp, sed -i)
 allow qti_init_shell wifi_vendor_data_file:dir create_dir_perms;
 allow qti_init_shell wifi_vendor_data_file:file create_file_perms;
-
-# init.martini.power.sh: list /sys/class/devfreq and set the governor of the
-# qcom,cpubw.<N> node (sysfs_devfreq in sepolicy-legacy's file_contexts)
-allow qti_init_shell sysfs:dir r_dir_perms;
-allow qti_init_shell sysfs_devfreq:file rw_file_perms;

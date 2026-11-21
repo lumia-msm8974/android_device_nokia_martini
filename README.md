@@ -115,9 +115,10 @@ Adapted for the 930:
   display, camera; shutdown at 56 C), read as `pa_therm1`: this needs the
   kernel that renames the ADC_TM zones (`martini-thermal-adc`). Core set
   point 75 C as on the OnePlus One; no hotplug actions;
-- CPU bandwidth: `init.martini.power.sh` sets `cpubw_hwmon` on whatever
-  `qcom,cpubw.<N>` node the kernel creates (opt out with
-  `persist.vendor.martini.cpubw_hwmon=0`);
+- CPU bandwidth (DDR bus vote): the device tree `cpufreq` governor, which
+  follows the CPU frequency. `cpubw_hwmon`, used on the OnePlus One, does
+  not work on the Lumias (its interrupt never fires): it kept the bus at
+  100 MHz and doubled app start times until the 21/11/2026 fix;
 - power profile: BV-5QW 2420 mAh, cpufreq steps of a speed bin 2 MSM8974
   v2 (2150400 kHz top) with the Nexus 5 currents; unmeasured.
 
@@ -312,8 +313,8 @@ To test on the phone:
 - [ ] lk1st load addresses and boot of `boot.img`; SMP through the parking
       mailboxes; cpufreq range and speed bin (top step 1958400, 2150400 or
       2265600 kHz, `power_profile.xml`);
-- [ ] thermal-engine: sections loaded, GPU device found, `cpubw_hwmon`
-      active, temperatures under load; `pa_therm1` (skin) against the
+- [ ] thermal-engine: sections loaded, GPU device found, temperatures
+      under load; `pa_therm1` (skin) against the
       temperature of the back cover before trusting the skin rules;
 - [ ] GPU floor: `min_pwrlevel` at 1 while scrolling, back to 3 after;
 - [ ] MDSS panel and `lcd-backlight` range; always-on display: idle mode
