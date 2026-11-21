@@ -134,7 +134,10 @@ on property:recovery.perf.mode=0
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "interactive"
 
 on property:dev.bootcomplete=1
-    setprop sys.io.scheduler "bfq"
+    # ROW serves reads before writes: with something writing in the
+    # background (a download, an install, dex2oat) apps start in a third of
+    # the time they take with bfq, and without it they start as fast.
+    setprop sys.io.scheduler "row"
     setprop vendor.post_boot.parsed 1
 
 # Screen-off power without system suspend (kernel lumia_screenoff): while fb0
