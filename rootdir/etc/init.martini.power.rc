@@ -134,9 +134,16 @@ on property:recovery.perf.mode=0
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "interactive"
 
 on property:dev.bootcomplete=1
-    # ROW serves reads before writes: with something writing in the
-    # background (a download, an install, dex2oat) apps start in a third of
-    # the time they take with bfq, and without it they start as fast.
+    # ROW serves reads before writes and does not idle. Against bfq, measured
+    # on the Lumia 930 (six cold starts with the page cache dropped, 4 KiB
+    # append + fsync):
+    #   something writing in the background   bfq 12.9-16.9 s   row 5.6-6.5 s
+    #   something reading in the background   bfq 5.9-6.0 s     row 6.5-7.8 s
+    #   nothing else                          bfq 4.8-5.1 s     row 4.7 s
+    #   one fsync                             bfq 21 ms average row 2.5 ms
+    # bfq waits on the queue of the process that wrote before it serves the
+    # journal commit, so every database commit of an app pays for it; with
+    # slice_idle 0 that goes away but writers still double the start times.
     setprop sys.io.scheduler "row"
     setprop vendor.post_boot.parsed 1
 
