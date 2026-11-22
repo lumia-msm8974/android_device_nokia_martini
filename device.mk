@@ -546,6 +546,27 @@ PRODUCT_PACKAGES_DEBUG += \
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     service.adb.root=1
 
+# Dexpreopt: system apps opened often, compiled in full (on top of the
+# defaults, SystemUI and the launcher). Without a profile at build time these
+# apps otherwise run interpreted until the background dexopt has seen them
+# used. Measured on the Lumia 930 against speed-profile with a real profile
+# (cold start): Calculator 384 -> 299 ms, Clock 641 -> 540, Contacts 465 ->
+# 408, Messaging 422 -> 380, Calendar 476 -> 443, Jelly 769 -> 723, Recorder
+# 290 -> 269. Not the large ones: Files and Music start faster with their
+# profile. The list is here because this product does not inherit msm8974.mk
+# of the common tree.
+PRODUCT_DEXPREOPT_SPEED_APPS += \
+    Settings \
+    Dialer \
+    TeleService \
+    Contacts \
+    DeskClock \
+    Etar \
+    ExactCalculator \
+    Jelly \
+    messaging \
+    Recorder
+
 $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_k.mk)
 
 # Recovery: blocking FunctionFS for adbd (kernel 3.4)
