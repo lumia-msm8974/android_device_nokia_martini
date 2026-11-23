@@ -33,6 +33,13 @@
  * Mode 2 (16:9 video): 5376x3024 (x 5..5380, y 364..3387), 2x2 binning,
  * 2688x1512 RAW10, line_length 8000, frame_length 2000: 30 frames/s.
  *
+ * Mode 3 (4K video): 3840x2160 centre crop without binning, line_length 7200,
+ * frame_length 2222: 30 frames/s at 750 Mbit/s per lane. It declares 28.99 so
+ * the backend does not pick it for photos (see setPreviewFpsRange in the HAL).
+ *
+ * Mode 4 (1080p60): the window of mode 2, binned, line_length 4000,
+ * frame_length 2000: 60 frames/s at 960 Mbit/s per lane.
+ *
  * Copyright (c) 2026, Lorenzo Giannoccaro.
  */
 #include "../bacon_sensor_abi.h"
@@ -51,6 +58,17 @@
 #define KARMA_V_X_OUT     2688   /* mode 2, binned 16:9 video */
 #define KARMA_V_Y_OUT     1512
 #define KARMA_V_FRAME_LEN 2000   /* line 8000: 30 frames/s */
+#define KARMA_4K_X_OUT    3840   /* mode 3, centre crop, no binning */
+#define KARMA_4K_Y_OUT    2160
+#define KARMA_4K_LINE     7200
+#define KARMA_4K_FRAME    2222   /* 30 frames/s */
+#define KARMA_60_LINE     4000   /* mode 4, binned 16:9 at 60 frames/s */
+#define KARMA_60_FRAME    2000
+#define KARMA_OP_MUL      1000   /* 600 Mbit/s per lane */
+#define KARMA_OP_MUL_4K   1250   /* 750 Mbit/s per lane */
+#define KARMA_OP_MUL_60   1600   /* 960 Mbit/s per lane */
+#define KARMA_OP_CLK_4K   300000000
+#define KARMA_OP_CLK_60   384000000
 #define KARMA_VT_CLK      480000000
 #define KARMA_OP_CLK      240000000
 #define KARMA_MARGIN      8      /* coarse_integration_time_max_margin */
@@ -177,6 +195,7 @@ static struct k_i2c_reg_setting groupon_settings = { groupon_regs, 1, I2C_WORD_A
 static struct k_i2c_reg_setting groupoff_settings = { groupoff_regs, 1, I2C_WORD_ADDR, I2C_BYTE_DATA, 0 };
 
 static struct k_i2c_reg_array res_full_regs[] = {
+    R(0x030e, KARMA_OP_MUL >> 8), R(0x030f, KARMA_OP_MUL & 0xff),
     R(0x0340, KARMA_FULL_FRAME >> 8), R(0x0341, KARMA_FULL_FRAME & 0xff),
     R(0x0342, KARMA_FULL_LINE >> 8),  R(0x0343, KARMA_FULL_LINE & 0xff),
     R(0x0344, 0x00), R(0x0345, 0xc5),             /* x_addr_start 197 */
@@ -195,6 +214,7 @@ static struct k_i2c_reg_array res_full_regs[] = {
 };
 
 static struct k_i2c_reg_array res0_regs[] = {
+    R(0x030e, KARMA_OP_MUL >> 8), R(0x030f, KARMA_OP_MUL & 0xff),
     R(0x0340, KARMA_FRAME_LEN >> 8), R(0x0341, KARMA_FRAME_LEN & 0xff),
     R(0x0342, KARMA_LINE_LEN >> 8),  R(0x0343, KARMA_LINE_LEN & 0xff),
     R(0x0344, 0x00), R(0x0345, 0xc5),             /* x_addr_start 197 */
@@ -213,6 +233,7 @@ static struct k_i2c_reg_array res0_regs[] = {
 };
 
 static struct k_i2c_reg_array res1_regs[] = {
+    R(0x030e, KARMA_OP_MUL >> 8), R(0x030f, KARMA_OP_MUL & 0xff),
     R(0x0340, KARMA_V_FRAME_LEN >> 8), R(0x0341, KARMA_V_FRAME_LEN & 0xff),
     R(0x0342, KARMA_LINE_LEN >> 8),  R(0x0343, KARMA_LINE_LEN & 0xff),
     R(0x0344, 0x00), R(0x0345, 0x05),             /* x_addr_start 5 */
@@ -230,10 +251,50 @@ static struct k_i2c_reg_array res1_regs[] = {
     R(0x0204, 0x00), R(0x0205, KARMA_GAIN_CODE_MIN),
 };
 
+static struct k_i2c_reg_array res_4k_regs[] = {
+    R(0x030e, KARMA_OP_MUL_4K >> 8), R(0x030f, KARMA_OP_MUL_4K & 0xff),
+    R(0x0340, KARMA_4K_FRAME >> 8), R(0x0341, KARMA_4K_FRAME & 0xff),
+    R(0x0342, KARMA_4K_LINE >> 8),  R(0x0343, KARMA_4K_LINE & 0xff),
+    R(0x0344, 773 >> 8), R(0x0345, 773 & 0xff),   /* x_addr_start */
+    R(0x0346, 796 >> 8), R(0x0347, 796 & 0xff),   /* y_addr_start */
+    R(0x0348, 4612 >> 8), R(0x0349, 4612 & 0xff), /* x_addr_end */
+    R(0x034a, 2955 >> 8), R(0x034b, 2955 & 0xff), /* y_addr_end */
+    R(0x034c, KARMA_4K_X_OUT >> 8), R(0x034d, KARMA_4K_X_OUT & 0xff),
+    R(0x034e, KARMA_4K_Y_OUT >> 8), R(0x034f, KARMA_4K_Y_OUT & 0xff),
+    R(0x0900, 0x00), R(0x0901, 0x11),             /* no binning */
+    R(0x0400, 0x00),
+    R(0x0408, 0x00), R(0x0409, 0x00), R(0x040a, 0x00), R(0x040b, 0x00),
+    R(0x040c, KARMA_4K_X_OUT >> 8), R(0x040d, KARMA_4K_X_OUT & 0xff),
+    R(0x040e, KARMA_4K_Y_OUT >> 8), R(0x040f, KARMA_4K_Y_OUT & 0xff),
+    R(0x0202, 0x07), R(0x0203, 0x00),
+    R(0x0204, 0x00), R(0x0205, KARMA_GAIN_CODE_MIN),
+};
+
+static struct k_i2c_reg_array res_60_regs[] = {
+    R(0x030e, KARMA_OP_MUL_60 >> 8), R(0x030f, KARMA_OP_MUL_60 & 0xff),
+    R(0x0340, KARMA_60_FRAME >> 8), R(0x0341, KARMA_60_FRAME & 0xff),
+    R(0x0342, KARMA_60_LINE >> 8),  R(0x0343, KARMA_60_LINE & 0xff),
+    R(0x0344, 0x00), R(0x0345, 0x05),             /* x_addr_start 5 */
+    R(0x0346, 0x01), R(0x0347, 0x6c),             /* y_addr_start 364 */
+    R(0x0348, 0x15), R(0x0349, 0x04),             /* x_addr_end 5380 */
+    R(0x034a, 0x0d), R(0x034b, 0x3b),             /* y_addr_end 3387 */
+    R(0x034c, KARMA_V_X_OUT >> 8), R(0x034d, KARMA_V_X_OUT & 0xff),
+    R(0x034e, KARMA_V_Y_OUT >> 8), R(0x034f, KARMA_V_Y_OUT & 0xff),
+    R(0x0900, 0x01), R(0x0901, 0x22),             /* 2x2 binning */
+    R(0x0400, 0x00),
+    R(0x0408, 0x00), R(0x0409, 0x00), R(0x040a, 0x00), R(0x040b, 0x00),
+    R(0x040c, KARMA_V_X_OUT >> 8), R(0x040d, KARMA_V_X_OUT & 0xff),
+    R(0x040e, KARMA_V_Y_OUT >> 8), R(0x040f, KARMA_V_Y_OUT & 0xff),
+    R(0x0202, 0x03), R(0x0203, 0x80),
+    R(0x0204, 0x00), R(0x0205, KARMA_GAIN_CODE_MIN),
+};
+
 static struct k_i2c_reg_setting res_settings[] = {
     { res_full_regs, COUNT(res_full_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
     { res0_regs, COUNT(res0_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
     { res1_regs, COUNT(res1_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
+    { res_4k_regs, COUNT(res_4k_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
+    { res_60_regs, COUNT(res_60_regs), I2C_WORD_ADDR, I2C_BYTE_DATA, 0 },
 };
 static struct b_reg_settings_array res_settings_array = { res_settings, COUNT(res_settings) };
 
@@ -265,6 +326,20 @@ static struct b_out_info out_info[] = {
         .binning_factor = 2, .binning_method = 0,
         .min_fps = 7.5f, .max_fps = 30.0f, .mode = 1,
     },
+    {
+        .x_output = KARMA_4K_X_OUT, .y_output = KARMA_4K_Y_OUT,
+        .line_length_pclk = KARMA_4K_LINE, .frame_length_lines = KARMA_4K_FRAME,
+        .vt_pixel_clk = KARMA_VT_CLK, .op_pixel_clk = KARMA_OP_CLK_4K,
+        .binning_factor = 1, .binning_method = 0,
+        .min_fps = 7.5f, .max_fps = 28.99f, .mode = 1, /* really 30, see the HAL */
+    },
+    {
+        .x_output = KARMA_V_X_OUT, .y_output = KARMA_V_Y_OUT,
+        .line_length_pclk = KARMA_60_LINE, .frame_length_lines = KARMA_60_FRAME,
+        .vt_pixel_clk = KARMA_VT_CLK, .op_pixel_clk = KARMA_OP_CLK_60,
+        .binning_factor = 2, .binning_method = 0,
+        .min_fps = 7.5f, .max_fps = 60.0f, .mode = 1,
+    },
 };
 static struct b_out_info_array out_info_array = { out_info, COUNT(out_info) };
 
@@ -276,10 +351,10 @@ static struct k_csi2_params csi2_mode0 = {
     .csiphy_params = { .lane_cnt = 4, .settle_cnt = 20, .lane_mask = 0x0,
                        .combo_mode = 0, .csid_core = 0 },
 };
-static struct k_csi2_params *csi_params[] = { &csi2_mode0, &csi2_mode0, &csi2_mode0 };
+static struct k_csi2_params *csi_params[] = { &csi2_mode0, &csi2_mode0, &csi2_mode0, &csi2_mode0, &csi2_mode0 };
 static struct b_csi_params_array csi_params_array = { csi_params, COUNT(csi_params) };
 
-static struct b_crop crop[] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
+static struct b_crop crop[] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
 static struct b_crop_array crop_array = { crop, COUNT(crop) };
 
 /* Stand-in tuning from the bacon IMX214 (same ISP, 1.12 um BSI) until the
@@ -287,6 +362,12 @@ static struct b_crop_array crop_array = { crop, COUNT(crop) };
 static struct b_chromatix chromatix[] = {
     { "libchromatix_karma_common.so", "libchromatix_karma_preview.so",
       "libchromatix_karma_snapshot.so", "libchromatix_karma_default_video.so",
+      "libchromatix_karma_liveshot.so" },
+    { "libchromatix_karma_common.so", "libchromatix_karma_preview_binning.so",
+      "libchromatix_karma_preview_binning.so", "libchromatix_karma_video_binning.so",
+      "libchromatix_karma_liveshot.so" },
+    { "libchromatix_karma_common.so", "libchromatix_karma_preview_binning.so",
+      "libchromatix_karma_preview_binning.so", "libchromatix_karma_video_binning.so",
       "libchromatix_karma_liveshot.so" },
     { "libchromatix_karma_common.so", "libchromatix_karma_preview_binning.so",
       "libchromatix_karma_preview_binning.so", "libchromatix_karma_video_binning.so",
