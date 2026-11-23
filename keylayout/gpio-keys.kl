@@ -1,0 +1,6 @@
+# Lumia camera button and volume up (PM8941 GPIOs, gpio-keys).
+# Two stages: half press is KEY_CAMERA_FOCUS, full press KEY_CAMERA_SNAPSHOT,
+# which Generic.kl does not map. Volume down is on the PMIC (qpnp_pon).
+key 115   VOLUME_UP
+key 528   FOCUS
+key 766   CAMERA
