@@ -113,8 +113,12 @@ Adapted for the 930:
   105 C (90 C on tsens 2, 85 C on PA_THERM). Skin limits from the 14
   Windows zones on SYS_THERM2 (46-54 C: CPU, GPU, charging current,
   display, camera; shutdown at 56 C), read as `pa_therm1`: this needs the
-  kernel that renames the ADC_TM zones (`martini-thermal-adc`). Core set
-  point 75 C as on the OnePlus One; no hotplug actions;
+  kernel that renames the ADC_TM zones (`martini-thermal-adc`). The skin
+  CPU limit comes down in steps to 729 MHz (no jump to 300 MHz). Core set
+  point 85 C, as on the LG G2/G3 (75 C on the OnePlus One, 90 C by
+  default): with the camera on the whole SoC heats, not the CPU, and at
+  75 C the step-wise limit fell to 300 MHz without cooling anything, so
+  the camera dropped frames; no hotplug actions;
 - CPU bandwidth (DDR bus vote): the device tree `cpufreq` governor, which
   follows the CPU frequency. `cpubw_hwmon`, used on the OnePlus One, does
   not work on the Lumias (its interrupt never fires): it kept the bus at
