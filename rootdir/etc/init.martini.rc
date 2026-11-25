@@ -48,3 +48,16 @@ service vendor.martini_bootlog /vendor/bin/init.martini.bootlog.sh
 on post-fs-data && property:persist.vendor.martini.bootlog=1
     mkdir /data/vendor/bootlog 0750 root root
     start vendor.martini_bootlog
+
+# LineageOS recovery for the Updater (init.martini.recovery.sh): written into
+# the recovery partition only when it holds no boot image, so a TWRP the user
+# put there stays. Runs in the domain of install-recovery.sh.
+service vendor.martini_recovery /vendor/bin/init.martini.recovery.sh
+    class main
+    user root
+    group root
+    disabled
+    oneshot
+
+on property:sys.boot_completed=1
+    start vendor.martini_recovery

@@ -12,6 +12,7 @@
 
 # Init scripts
 /(vendor|system/vendor)/bin/init\.martini\.wifi\.sh      u:object_r:qti_init_shell_exec:s0
+/(vendor|system/vendor)/bin/init\.martini\.recovery\.sh  u:object_r:vendor_install_recovery_exec:s0
 /(vendor|system/vendor)/bin/init\.martini\.fm\.sh        u:object_r:qti_init_shell_exec:s0
 
 # Bring-up boot log

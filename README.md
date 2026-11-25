@@ -175,6 +175,37 @@ It only changes the LineageOS and AOSP settings that LineageParts also
 uses, so it needs no permission, init or SELinux change here. `device.mk`
 adds it when the app is checked out.
 
+## OTA updates
+
+The LineageOS Updater (*Settings > System > Updater*) reads
+`https://github.com/lumia-msm8974/android_device_nokia_martini/releases/latest/download/ota`
+(`lineage.updater.uri` in `device.mk`; a writable property holds at most 91
+bytes, hence the short name). Every release needs that JSON file next to
+its zip:
+
+```
+device/oppo/msm8974-common/tools/updater-json.py <zip> --repo lumia-msm8974/android_device_nokia_martini --tag <tag>
+gh release upload <tag> ota -R lumia-msm8974/android_device_nokia_martini
+```
+
+GitHub serves `latest` only from the release marked Latest, so a
+pre-release is never offered.
+
+The Updater downloads the zip to `/data`, uncrypt writes the block map to
+`/cache` and the phone reboots with the `recovery` reason, which lk1st turns
+into a boot of the recovery partition. The installer leaves that partition
+empty (TWRP only runs from the PC): when it holds no boot image,
+`init.martini.recovery.sh` writes the LineageOS recovery of the build there
+after boot. A TWRP the user installed there is left alone, since TWRP also
+installs from the block map. *Update recovery* in the Updater menu
+(`persist.vendor.recovery_update`, off by default as in LineageOS) refreshes
+the LineageOS recovery with every build and would replace TWRP. GApps and
+Magisk stay through `addon.d`, as with a sideload. lk1st ignores the recovery command in `misc`: if an update is cut
+off, choose *Recovery* in the lk1st menu to run it again.
+
+Builds made before this setting never look for updates, so the first build
+with it has to be installed by hand. Not tested on a phone yet.
+
 ## FM radio (unverified on a 930)
 
 The 930 has FM radio on Windows Phone, through the FM core of the WCN3680:

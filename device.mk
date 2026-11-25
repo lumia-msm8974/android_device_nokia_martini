@@ -413,6 +413,7 @@ PRODUCT_PACKAGES += \
     init.martini.power.rc \
     init.martini.qcom.rc \
     init.martini.wifi.sh \
+    init.martini.recovery.sh \
     init.qcom.bt.sh \
     init.martini.bootlog.sh \
     libbtqmishim \
@@ -580,3 +581,21 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/product_launched_with_k.mk)
 # Recovery: blocking FunctionFS for adbd (kernel 3.4)
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/init.recovery.martini.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.martini.rc
+
+# OTA updates in Settings > System > Updater. The Updater reads "ota", a
+# JSON asset of the latest GitHub release of this repository (written with
+# tools/updater-json.py of msm8974-common when the release is made; GitHub
+# never serves "latest" from a pre-release), downloads the zip to /data and
+# reboots into the recovery, which installs it from the block map
+# uncrypt leaves in /cache (lk1st boots the recovery partition on the
+# "recovery" reboot reason). The installer never writes the recovery
+# partition, since TWRP only runs from the PC: when it holds no boot image,
+# init.martini.recovery.sh writes the recovery of the build there after boot.
+# A TWRP the user installed stays, it installs Updater packages as well.
+# "Update recovery" in the Updater (persist.vendor.recovery_update, off as in
+# LineageOS) refreshes the LineageOS recovery with every build.
+# The URI goes to /product/build.prop: Android 11 has no
+# PRODUCT_SYSTEM_PROPERTIES and drops it without a warning. A writable
+# property holds at most 91 bytes, hence the short asset name.
+PRODUCT_PRODUCT_PROPERTIES += \
+    lineage.updater.uri=https://github.com/lumia-msm8974/android_device_nokia_martini/releases/latest/download/ota
