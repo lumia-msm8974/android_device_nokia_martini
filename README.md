@@ -106,19 +106,23 @@ Adapted for the 930:
 - NFC: the legacy PN544 path is kept so the tree builds, but no EEPROM
   tuning is listed (the 1520 values belong to its antenna), so the NFC
   service does not initialise the chip.
-- thermal: `configs/thermal-engine-8974.conf` for the msm8974 blob, with
-  the passive/critical temperatures of the stock DSDT thermal zones where
-  they use a sensor the blob reads (TSENS, PM8941 die, PA_THERM): GPU
-  step-wise at 85 C, CPU at 83 C (tsens 2) and 95 C (tsens 0), shutdown at
-  105 C (90 C on tsens 2, 85 C on PA_THERM). Skin limits from the 14
-  Windows zones on SYS_THERM2 (46-54 C: CPU, GPU, charging current,
-  display, camera; shutdown at 56 C), read as `pa_therm1`: this needs the
-  kernel that renames the ADC_TM zones (`martini-thermal-adc`). The skin
-  CPU limit comes down in steps to 729 MHz (no jump to 300 MHz). Core set
-  point 85 C, as on the LG G2/G3 (75 C on the OnePlus One, 90 C by
-  default): with the camera on the whole SoC heats, not the CPU, and at
-  75 C the step-wise limit fell to 300 MHz without cooling anything, so
-  the camera dropped frames; no hotplug actions;
+- thermal: `configs/thermal-engine-8974.src.conf` for the msm8974 blob,
+  shipped as `configs/thermal-engine-8974.conf` without comments
+  (`configs/gen-thermal-conf.sh`): the blob reads only the first 5120
+  bytes of the file, and the documented one lost every rule after the
+  first nine until ROM 20261123. It has the passive/critical temperatures
+  of the stock DSDT thermal zones where they use a sensor the blob reads
+  (TSENS, PM8941 die, PA_THERM): GPU step-wise at 85 C, shutdown at 105 C
+  (90 C on tsens 2, 85 C on PA_THERM). Skin limits from the 14 Windows
+  zones on SYS_THERM2 (46-54 C: CPU, GPU, charging current, display,
+  camera; shutdown at 56 C), read as `pa_therm1`: this needs the kernel
+  that renames the ADC_TM zones (`martini-thermal-adc`). The CPU limits
+  are monitors with fixed steps: cores from 85 C (as on the LG G2/G3; 75 C
+  on the OnePlus One, 90 C by default), PoP memory from 80 C, down to a
+  floor of 1190 MHz. The step-wise rules of the blob have no lower bound
+  and fell to 300 MHz with the camera on, where the whole SoC heats, not
+  the CPU; below 960 MHz the camera exposure swings between bright and
+  dark; no hotplug actions;
 - CPU bandwidth (DDR bus vote): the device tree `cpufreq` governor, which
   follows the CPU frequency. `cpubw_hwmon`, used on the OnePlus One, does
   not work on the Lumias (its interrupt never fires): it kept the bus at
@@ -317,8 +321,9 @@ To test on the phone:
 - [ ] lk1st load addresses and boot of `boot.img`; SMP through the parking
       mailboxes; cpufreq range and speed bin (top step 1958400, 2150400 or
       2265600 kHz, `power_profile.xml`);
-- [ ] thermal-engine: sections loaded, GPU device found, temperatures
-      under load; `pa_therm1` (skin) against the
+- [ ] thermal-engine: sections loaded (the log lists them at start: count
+      them against the file), GPU device found, temperatures under load at
+      the real thresholds; `pa_therm1` (skin) against the
       temperature of the back cover before trusting the skin rules;
 - [ ] GPU floor: `min_pwrlevel` at 1 while scrolling, back to 3 after;
 - [ ] MDSS panel and `lcd-backlight` range; always-on display: idle mode
