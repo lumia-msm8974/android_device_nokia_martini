@@ -108,6 +108,12 @@ PRODUCT_PACKAGES += \
     libactuator_karma_camcorder \
     libsensor1shim
 
+# Arco camera app: the prebuilt release of msm8974-common (prebuilt/Arco),
+# kept with its own signature so that newer releases install over it. This
+# tree does not inherit msm8974.mk, where it is listed for the other devices.
+PRODUCT_PACKAGES += \
+    Arco
+
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.camera.isp.dualisp=1
 
