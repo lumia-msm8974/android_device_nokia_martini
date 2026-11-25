@@ -414,12 +414,30 @@ static int32_t karma_calc_exposure(float real_gain, uint16_t line_count, struct 
     return 0;
 }
 
+/*
+ * How the sensor takes an exposure write (measured on the 930 with the exposure
+ * locked and the registers written by hand, against the mean of every recorded
+ * frame): the integration time is used two frames after the write, the gain
+ * one frame after it. Under the grouped parameter hold (0x0104) both are
+ * used two frames later, but only if no other hold comes during the next
+ * frame: that one drops the gain still waiting. The daemon writes on every
+ * frame while the AEC converges, so with a hold on every write the gain never
+ * changed until the AEC stopped, then jumped: the picture went bright and dark
+ * about every second in dim scenes (worst at 60 frames/s and in 4K, where the
+ * gain does most of the work).
+ *
+ * So the hold is used only when the integration time or the frame length
+ * change, and a write that changes the gain alone goes without it.
+ */
+static uint32_t karma_last_line, karma_last_fl;
+
 static int32_t karma_fill_exposure(uint16_t gain, uint32_t line, uint32_t fl_lines,
                                    int32_t luma_avg, uint32_t fgain,
                                    struct k_i2c_reg_setting *rs)
 {
     struct k_i2c_reg_array *r = rs->reg_setting;
     uint16_t n = 0;
+    int hold;
 
     (void)luma_avg;
     (void)fgain;
@@ -439,14 +457,21 @@ static int32_t karma_fill_exposure(uint16_t gain, uint32_t line, uint32_t fl_lin
     }
     if (fl_lines < line + KARMA_MARGIN)
         fl_lines = line + KARMA_MARGIN;
-    r[n].reg_addr = 0x0104; r[n].reg_data = 0x01; r[n++].delay = 0;
+    hold = line != karma_last_line || fl_lines != karma_last_fl;
+    karma_last_line = line;
+    karma_last_fl = fl_lines;
+    if (hold) {
+        r[n].reg_addr = 0x0104; r[n].reg_data = 0x01; r[n++].delay = 0;
+    }
     r[n].reg_addr = 0x0340; r[n].reg_data = (fl_lines >> 8) & 0xff; r[n++].delay = 0;
     r[n].reg_addr = 0x0341; r[n].reg_data = fl_lines & 0xff; r[n++].delay = 0;
     r[n].reg_addr = 0x0202; r[n].reg_data = (line >> 8) & 0xff; r[n++].delay = 0;
     r[n].reg_addr = 0x0203; r[n].reg_data = line & 0xff; r[n++].delay = 0;
     r[n].reg_addr = 0x0204; r[n].reg_data = (gain >> 8) & 0xff; r[n++].delay = 0;
     r[n].reg_addr = 0x0205; r[n].reg_data = gain & 0xff; r[n++].delay = 0;
-    r[n].reg_addr = 0x0104; r[n].reg_data = 0x00; r[n++].delay = 0;
+    if (hold) {
+        r[n].reg_addr = 0x0104; r[n].reg_data = 0x00; r[n++].delay = 0;
+    }
     rs->size = n;
     rs->addr_type = I2C_WORD_ADDR;
     rs->data_type = I2C_BYTE_DATA;
