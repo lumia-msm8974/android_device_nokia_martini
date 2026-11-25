@@ -37,8 +37,14 @@
  * frame_length 2222: 30 frames/s at 750 Mbit/s per lane. It declares 28.99 so
  * the backend does not pick it for photos (see setPreviewFpsRange in the HAL).
  *
- * Mode 4 (1080p60): the window of mode 2, binned, line_length 4000,
- * frame_length 2000: 60 frames/s at 960 Mbit/s per lane.
+ * Mode 4 (1080p60): the window of mode 2, binned, line_length 4800,
+ * frame_length 1667: 59.99 frames/s at 960 Mbit/s per lane (line_length 4000
+ * with frame_length 2000 gave groups of black frames whenever the exposure
+ * changed). At this rate the daemon's AEC takes up to 15 ms of the 16.7 ms
+ * frame when the scene is dark, which is no multiple of the 10 ms of 50 Hz
+ * lights: bands roll and the brightness pumps. karma_fill_exposure() keeps it
+ * at 10 ms and moves the rest to the gain, or at 20 ms (49.8 frames/s) when
+ * the gain is already at its top.
  *
  * Copyright (c) 2026, Lorenzo Giannoccaro.
  */
@@ -62,8 +68,9 @@
 #define KARMA_4K_Y_OUT    2160
 #define KARMA_4K_LINE     7200
 #define KARMA_4K_FRAME    2222   /* 30 frames/s */
-#define KARMA_60_LINE     4000   /* mode 4, binned 16:9 at 60 frames/s */
-#define KARMA_60_FRAME    2000
+#define KARMA_60_LINE     4800   /* mode 4, binned 16:9 at 60 frames/s */
+#define KARMA_60_FRAME    1667   /* 59.99 frames/s; unique, tells mode 4 apart in fill_exposure */
+#define KARMA_60_10MS     1000   /* lines in 10 ms at line_length 4800 */
 #define KARMA_OP_MUL      1000   /* 600 Mbit/s per lane */
 #define KARMA_OP_MUL_4K   1250   /* 750 Mbit/s per lane */
 #define KARMA_OP_MUL_60   1600   /* 960 Mbit/s per lane */
@@ -416,6 +423,20 @@ static int32_t karma_fill_exposure(uint16_t gain, uint32_t line, uint32_t fl_lin
 
     (void)luma_avg;
     (void)fgain;
+    if (fl_lines == KARMA_60_FRAME && line > KARMA_60_10MS) {
+        uint32_t g = (uint32_t)gain * line / KARMA_60_10MS;
+        if (g <= KARMA_GAIN_CODE_MAX) {
+            /* 10 ms at 59.97 frames/s, the gain makes up for the rest */
+            gain = (uint16_t)g;
+            line = KARMA_60_10MS;
+        } else {
+            /* no gain left: 20 ms at 49.8 frames/s, as the AEC does by itself
+             * when the scene gets darker still */
+            g = (uint32_t)gain * line / (2 * KARMA_60_10MS);
+            gain = g < KARMA_GAIN_CODE_MIN ? KARMA_GAIN_CODE_MIN : (uint16_t)g;
+            line = 2 * KARMA_60_10MS;
+        }
+    }
     if (fl_lines < line + KARMA_MARGIN)
         fl_lines = line + KARMA_MARGIN;
     r[n].reg_addr = 0x0104; r[n].reg_data = 0x01; r[n++].delay = 0;
