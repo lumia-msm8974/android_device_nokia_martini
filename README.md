@@ -115,7 +115,9 @@ Adapted for the 930:
   (TSENS, PM8941 die, PA_THERM): GPU step-wise at 85 C, shutdown at 105 C
   (90 C on tsens 2, 85 C on PA_THERM). Skin limits from the 14 Windows
   zones on SYS_THERM2 (46-54 C: CPU, GPU, charging current, display,
-  camera; shutdown at 56 C), read as `pa_therm1`: this needs the kernel
+  camera), read as `pa_therm1`, with a shutdown at 65 C (Windows has it
+  at 56 C; no Android phone of this SoC generation shuts down on a skin
+  sensor that low, and most not at all): this needs the kernel
   that renames the ADC_TM zones (`martini-thermal-adc`). The CPU limits
   are monitors with fixed steps: cores from 85 C (as on the LG G2/G3; 75 C
   on the OnePlus One, 90 C by default), PoP memory from 80 C, down to a
