@@ -399,10 +399,15 @@ PRODUCT_PACKAGES += \
 
 # Screen-off power without system suspend (lumia_screenoff kernel switches,
 # init.martini.power.rc): handoff vote groups dropped while the screen is off.
-# 0x29 = bus + Krait rails + MMSS, measured on the 930: 235 -> 159 mA.
-# Never 0x04 (GPU/OCMEM): it hangs the ADSP. 0x40 is untested.
+# 0x29 = bus + Krait rails + MMSS (930: 235 -> 159 mA). 0x6a9 adds the XO
+# voters (0x80), CE1 (0x200) and the GCC votes on the XO path (0x400), so the
+# RPM can shut XO down. Measured on the 930 overnight, cable out:
+# 81.5 mA with 0x29, 61.7 mA with 0x6a9.
+# XO never shuts down with a USB cable in. Rollback: 0x29.
+# Never 0x04 (GPU/OCMEM): it hangs the ADSP. Never 0x40 with the XO groups: it
+# also drops the OCMEM/ADSP config clocks and the ADSP stays awake.
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.vendor.martini.screenoff_groups=0x29 \
+    persist.vendor.martini.screenoff_groups=0x6a9 \
     persist.vendor.martini.tzpc=1 \
     persist.vendor.martini.screenoff_max_khz=0
 
